@@ -39,7 +39,7 @@ import {
   INITIAL_ISSUES
 } from './utils/mockData';
 
-// Custom Map Marker icons
+// Custom Map-Marker icons
 const createCustomIcon = (severity, status) => {
   let color = '#3b82f6'; // blue
   if (status === 'resolved') {
