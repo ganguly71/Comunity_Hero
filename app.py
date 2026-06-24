@@ -6,6 +6,7 @@ from models import db, User, Issue, Comment, Vote, UpdateLog
 from datetime import datetime
 from dotenv import load_dotenv
 import google.generativeai as genai
+from supabase import create_client, Client
 
 # Load environment variables
 load_dotenv()
@@ -23,6 +24,17 @@ else:
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize Supabase Client if credentials are provided for storage
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_key = os.environ.get("SUPABASE_KEY")
+supabase_client = None
+if supabase_url and supabase_key:
+    try:
+        supabase_client = create_client(supabase_url, supabase_key)
+        print("Supabase client initialized successfully for storage.")
+    except Exception as e:
+        print(f"Failed to initialize Supabase client: {e}")
 
 # Configure Upload Folder
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
@@ -225,6 +237,13 @@ def get_issues():
                 'created_at': log.created_at.strftime('%Y-%m-%d %H:%M')
             })
 
+        img_url = None
+        if issue.image_filename:
+            if issue.image_filename.startswith('http'):
+                img_url = issue.image_filename
+            else:
+                img_url = url_for('static', filename='uploads/' + issue.image_filename)
+
         output.append({
             'id': issue.id,
             'title': issue.title,
@@ -233,7 +252,7 @@ def get_issues():
             'category': issue.category,
             'latitude': issue.latitude,
             'longitude': issue.longitude,
-            'image_url': url_for('static', filename='uploads/' + issue.image_filename) if issue.image_filename else None,
+            'image_url': img_url,
             'status': issue.status,
             'created_at': issue.created_at.strftime('%Y-%m-%d %H:%M'),
             'reporter': issue.reporter.username,
@@ -271,8 +290,28 @@ def report_issue():
         file = request.files['image']
         if file and allowed_file(file.filename):
             filename = secure_filename(f"{datetime.utcnow().timestamp()}_{file.filename}")
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            image_filename = filename
+            
+            if supabase_client:
+                try:
+                    # Upload directly to Supabase storage bucket 'issue-media'
+                    file_data = file.read()
+                    content_type = file.mimetype
+                    supabase_client.storage.from_('issue-media').upload(
+                        path=filename,
+                        file=file_data,
+                        file_options={"content-type": content_type}
+                    )
+                    # Retrieve public URL
+                    image_filename = supabase_client.storage.from_('issue-media').get_public_url(filename)
+                except Exception as e:
+                    print(f"Supabase storage upload failed: {e}. Falling back to local storage.")
+                    file.seek(0)
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    image_filename = filename
+            else:
+                # Local fallback
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                image_filename = filename
 
     issue = Issue(
         title=title,
