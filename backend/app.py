@@ -258,6 +258,17 @@ def award_user_xp(conn, user_id, action_type):
 # REST API ENDPOINTS
 # ==========================================
 
+@app.route("/", methods=["GET"])
+def index():
+    return jsonify({
+        "message": "Welcome to the Community Hero API backend! Navigate to your Vercel deployment URL to access the web application.",
+        "endpoints": {
+            "health": "/api/health",
+            "reports": "/api/reports",
+            "leaderboard": "/api/leaderboard"
+        }
+    })
+
 @app.route("/api/health", methods=["GET"])
 def health():
     return jsonify({

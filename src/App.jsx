@@ -191,8 +191,8 @@ export default function App() {
       
       setDb(prev => ({
         ...prev,
-        issues: issuesData,
-        users: usersData.length ? usersData.map(u => ({
+        issues: Array.isArray(issuesData) ? issuesData : prev.issues,
+        users: Array.isArray(usersData) ? usersData.map(u => ({
           id: u.id,
           email: u.email,
           fullName: u.full_name,
@@ -206,15 +206,15 @@ export default function App() {
           verifiedCount: u.verified_count,
           createdAt: u.created_at
         })) : prev.users,
-        comments: commentsData.map(c => ({
+        comments: Array.isArray(commentsData) ? commentsData.map(c => ({
           id: c.id,
           issueId: c.issue_id,
           userId: c.user_id,
           content: c.content,
           isAuthority: c.is_authority,
           createdAt: c.created_at
-        })),
-        statusHistory: historyData.map(h => ({
+        })) : prev.comments,
+        statusHistory: Array.isArray(historyData) ? historyData.map(h => ({
           id: h.id,
           issueId: h.issue_id,
           changedBy: h.changed_by,
@@ -222,7 +222,7 @@ export default function App() {
           newStatus: h.new_status,
           note: h.note,
           createdAt: h.created_at
-        }))
+        })) : prev.statusHistory
       }));
       
       if (activeUserData) {
