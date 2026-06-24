@@ -33,13 +33,34 @@ function initMap() {
         maxZoom: 20
     }).addTo(map);
 
+    // If role is manager or inspecting, geocode district center and center map
+    if (userRole !== 'citizen' || inspecting) {
+        const targetDist = inspecting ? inspectDistrict : userDistrict;
+        const targetSt = inspecting ? inspectState : userState;
+        if (targetDist && targetSt) {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(targetDist + ', ' + targetSt)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+                        map.setView([lat, lon], 12);
+                    }
+                }).catch(err => console.error("District center geocode failed:", err));
+        }
+    }
+
     // Attempt to center map on user's current location and place a marker
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((position) => {
             const userLat = position.coords.latitude;
             const userLng = position.coords.longitude;
             currentUserLocation = [userLat, userLng];
-            map.setView([userLat, userLng], 15);
+            
+            // Only auto-center on current location for citizens, to avoid shifting managers' view
+            if (userRole === 'citizen') {
+                map.setView([userLat, userLng], 15);
+            }
             
             // Add a special glowing pulse marker for current location
             const userIcon = L.divIcon({
@@ -58,9 +79,11 @@ function initMap() {
         });
     }
 
-    // Map Click: Open report modal with coordinates
+    // Map Click: Open report modal with coordinates (Only citizens can report)
     map.on('click', (e) => {
-        openReportModal(e.latlng.lat, e.latlng.lng);
+        if (userRole === 'citizen') {
+            openReportModal(e.latlng.lat, e.latlng.lng);
+        }
     });
 }
 
@@ -95,6 +118,7 @@ function loadIssues() {
         .then(data => {
             allIssues = data;
             renderMarkers();
+            updateDistrictSummary();
         })
         .catch(err => console.error('Error fetching issues:', err));
 }
@@ -108,8 +132,8 @@ function renderMarkers() {
     const showResolved = document.getElementById('toggle-resolved').checked;
 
     allIssues.forEach(issue => {
-        // Skip resolved issues if filter checkbox is not active
-        if (issue.status === 'Resolved' && !showResolved) {
+        // Skip resolved issues or govt completed issues if filter checkbox is not active
+        if ((issue.status === 'Resolved' || issue.govt_status === 'DONE') && !showResolved) {
             return;
         }
 
@@ -124,7 +148,7 @@ function renderMarkers() {
         // Tooltip on hover
         marker.bindTooltip(`
             <strong style="color:#f3f4f6; font-family:'Outfit';">${issue.title}</strong><br>
-            <span style="color:#9ca3af; font-size:0.8rem;">${issue.category} | ${issue.status}</span>
+            <span style="color:#9ca3af; font-size:0.8rem;">${issue.category} | Govt: ${issue.govt_status}</span>
         `, {
             direction: 'top',
             opacity: 0.9,
@@ -133,6 +157,35 @@ function renderMarkers() {
 
         markers.push(marker);
     });
+}
+
+// Update District metrics summary block beside map for managers
+function updateDistrictSummary() {
+    const summaryDiv = document.getElementById('district-summary');
+    const loadingDiv = document.getElementById('district-summary-loading');
+    if (!summaryDiv) return;
+    
+    let severe = 0;
+    let ongoing = 0;
+    let done = 0;
+    let notVisited = 0;
+    
+    allIssues.forEach(issue => {
+        if (issue.intensity === 'High') severe++;
+        if (issue.govt_status === 'ONGOING') ongoing++;
+        else if (issue.govt_status === 'DONE') done++;
+        else if (issue.govt_status === 'NOT VISITED') notVisited++;
+    });
+    
+    const targetDist = inspecting ? inspectDistrict : userDistrict;
+    document.getElementById('summary-district-name').innerText = targetDist;
+    document.getElementById('stat-severe').innerText = severe;
+    document.getElementById('stat-ongoing').innerText = ongoing;
+    document.getElementById('stat-done').innerText = done;
+    document.getElementById('stat-not-visited').innerText = notVisited;
+    
+    if (loadingDiv) loadingDiv.style.display = 'none';
+    summaryDiv.style.display = 'block';
 }
 
 // Select issue and show details in sidebar
@@ -166,11 +219,73 @@ function selectIssue(issue) {
     statBadge.innerText = issue.status;
     statBadge.className = 'badge status-' + issue.status.toLowerCase().replace(' ', '-');
 
+    // Govt Status display
+    const govtBadge = document.getElementById('issue-govt-status');
+    govtBadge.innerText = issue.govt_status;
+    govtBadge.className = 'badge';
+    let govtClass = 'badge-other';
+    if (issue.govt_status === 'NOT VISITED') govtClass = 'badge-other';
+    else if (issue.govt_status === 'ONGOING') govtClass = 'medium';
+    else if (issue.govt_status === 'DONE') govtClass = 'success';
+    govtBadge.classList.add(govtClass);
+    
+    const govtUpdated = document.getElementById('issue-govt-updated');
+    if (issue.govt_status_updated_at) {
+        govtUpdated.innerText = `Updated on: ${issue.govt_status_updated_at}`;
+    } else {
+        govtUpdated.innerText = `Not visited or updated yet.`;
+    }
+
+    // Govt status form display for district managers
+    const govtUpdateSec = document.getElementById('govt-update-section');
+    if (userRole === 'district_manager' && !inspecting) {
+        govtUpdateSec.style.display = 'block';
+        document.getElementById('govt-update-select').value = issue.govt_status;
+        document.getElementById('govt-update-content').value = '';
+    } else {
+        govtUpdateSec.style.display = 'none';
+    }
+
+    // Citizen challenge section
+    const challengeArea = document.getElementById('challenge-area');
+    const challengeFormSec = document.getElementById('challenge-form-section');
+    challengeArea.style.display = 'none';
+    challengeFormSec.style.display = 'none';
+    
+    if (userRole === 'citizen' && issue.govt_status === 'DONE' && issue.reporter_id === userId) {
+        if (issue.govt_status_updated_at) {
+            const parts = issue.govt_status_updated_at.split(' ');
+            const dateParts = parts[0].split('-');
+            const timeParts = parts[1].split(':');
+            const updatedDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], timeParts[0], timeParts[1]);
+            const diffTime = Math.abs(new Date() - updatedDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const remainingDays = 90 - diffDays;
+            
+            if (remainingDays > 0) {
+                challengeArea.style.display = 'block';
+                document.getElementById('challenge-timer').innerText = `${remainingDays} days left to challenge`;
+            }
+        } else {
+            challengeArea.style.display = 'block';
+            document.getElementById('challenge-timer').innerText = `90 days left to challenge`;
+        }
+    }
+
     document.getElementById('issue-desc').innerText = issue.description;
     document.getElementById('issue-reporter').innerText = issue.reporter;
     document.getElementById('issue-reporter-points').innerText = issue.reporter_points;
     document.getElementById('issue-date').innerText = issue.created_at;
     document.getElementById('issue-score').innerText = issue.score;
+    document.getElementById('issue-jurisdistrict').innerText = issue.district || 'Unknown';
+    document.getElementById('issue-jurisstate').innerText = issue.state || 'Unknown';
+
+    // Toggle Social bar & action points
+    if (userRole !== 'citizen') {
+        document.getElementById('citizen-social-bar').style.display = 'none';
+    } else {
+        document.getElementById('citizen-social-bar').style.display = 'flex';
+    }
 
     // Image/Video preview (supporting multiple media files)
     const mediaContainer = document.getElementById('media-preview');
@@ -188,7 +303,7 @@ function selectIssue(issue) {
                 video.src = cleanUrl;
                 video.controls = true;
                 video.style.width = '100%';
-                video.style.maxHeight = '200px';
+                video.style.maxHeight = '180px';
                 video.style.borderRadius = '12px';
                 video.style.border = '1px solid var(--border-color)';
                 video.style.marginBottom = '0.5rem';
@@ -197,7 +312,7 @@ function selectIssue(issue) {
                 const img = document.createElement('img');
                 img.src = cleanUrl;
                 img.style.width = '100%';
-                img.style.maxHeight = '200px';
+                img.style.maxHeight = '180px';
                 img.style.objectFit = 'cover';
                 img.style.borderRadius = '12px';
                 img.style.border = '1px solid var(--border-color)';
@@ -229,6 +344,7 @@ function deselectIssue() {
 function updateVoteButtons(userVote) {
     const upBtn = document.querySelector('.vote-btn.upvote');
     const downBtn = document.querySelector('.vote-btn.downvote');
+    if (!upBtn || !downBtn) return;
     
     upBtn.classList.remove('active');
     downBtn.classList.remove('active');
@@ -296,16 +412,10 @@ function castVote(voteType) {
     .then(data => {
         if (data.success) {
             document.getElementById('issue-score').innerText = data.score;
-            
-            // Toggle active status UI
             let newUserVote = null;
             if (data.action === 'voted') newUserVote = voteType;
             else if (data.action === 'switched') newUserVote = voteType;
-            // retraction leaves userVote as null
-            
             updateVoteButtons(newUserVote);
-            
-            // Update points navbar locally if possible, or reload list
             loadIssues();
         }
     })
@@ -328,11 +438,9 @@ function submitComment() {
     .then(data => {
         if (data.success) {
             input.value = '';
-            // Refresh comments on the page
             activeIssueData.comments.push(data.comment);
             renderComments(activeIssueData.comments);
             
-            // Increment user points badge locally
             const pointsBadge = document.getElementById('nav-user-points');
             if (pointsBadge) {
                 const currentVal = parseInt(pointsBadge.innerText) || 0;
@@ -345,12 +453,71 @@ function submitComment() {
     .catch(err => console.error(err));
 }
 
+// Government status updates handler
+function handleGovtUpdateSubmit(e) {
+    e.preventDefault();
+    if (!activeIssueId) return;
+    const form = document.getElementById('govt-update-form');
+    const formData = new FormData(form);
+    
+    fetch(`/api/issues/${activeIssueId}/govt_update`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Government status logged and updated.');
+            loadIssues();
+            deselectIssue();
+        } else {
+            alert(data.error || 'Failed to update government status.');
+        }
+    })
+    .catch(err => console.error(err));
+}
+
+// Challenge form actions
+function openChallengeForm() {
+    document.getElementById('challenge-area').style.display = 'none';
+    document.getElementById('challenge-form-section').style.display = 'block';
+    document.getElementById('challenge-reason').value = '';
+}
+
+function closeChallengeForm() {
+    document.getElementById('challenge-form-section').style.display = 'none';
+    document.getElementById('challenge-area').style.display = 'block';
+}
+
+function handleChallengeSubmit(e) {
+    e.preventDefault();
+    if (!activeIssueId) return;
+    const reason = document.getElementById('challenge-reason').value.trim();
+    if (!reason) return;
+    
+    fetch(`/api/issues/${activeIssueId}/challenge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: reason })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Resolution disputed. Government status has been set back to NOT VISITED.');
+            loadIssues();
+            deselectIssue();
+        } else {
+            alert(data.error || 'Failed to submit challenge.');
+        }
+    })
+    .catch(err => console.error(err));
+}
+
 // Modal handling
 function openReportModal(lat, lng) {
     document.getElementById('report-lat').value = lat.toFixed(6);
     document.getElementById('report-lng').value = lng.toFixed(6);
     
-    // Clear other form fields
     document.getElementById('report-title').value = '';
     document.getElementById('report-desc').value = '';
     document.getElementById('report-image').value = '';
@@ -367,11 +534,16 @@ function closeReportModal() {
     document.getElementById('report-modal').classList.remove('show');
 }
 
-// Issue report submission
+// Issue report submission (with current GPS tracking appended)
 function handleReportSubmit(e) {
     e.preventDefault();
     const form = document.getElementById('report-form');
     const formData = new FormData(form);
+
+    if (currentUserLocation) {
+        formData.append('user_latitude', currentUserLocation[0]);
+        formData.append('user_longitude', currentUserLocation[1]);
+    }
 
     fetch('/api/issues/report', {
         method: 'POST',
@@ -382,11 +554,8 @@ function handleReportSubmit(e) {
         if (data.success) {
             closeReportModal();
             loadIssues();
-            
-            // Show auto categorization success message in alerts
             alert(data.message);
             
-            // Refresh points indicator
             const pointsBadge = document.getElementById('nav-user-points');
             if (pointsBadge) {
                 const currentVal = parseInt(pointsBadge.innerText) || 0;
@@ -402,7 +571,7 @@ function handleReportSubmit(e) {
     });
 }
 
-// Search location using OpenStreetMap Nominatim API (100% free geocoding)
+// Search location using OpenStreetMap Nominatim API
 function searchLocation() {
     const input = document.getElementById('search-input');
     const query = input.value.trim();

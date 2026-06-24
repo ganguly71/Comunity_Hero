@@ -1,126 +1,253 @@
 {% extends "base.html" %}
 
-{% block title %}My Dashboard - Community Hero{% endblock %}
+{% block title %}Dashboard - Community Hero{% endblock %}
 
 {% block content %}
 <div style="margin-bottom: 2rem;">
-    <h1 style="font-family: var(--font-heading); font-size: 2rem; font-weight: 800;">My Dashboard</h1>
-    <p style="color: var(--text-muted);">Manage your reported issues, post updates, and verify community resolutions.</p>
+    {% if current_user.role == 'admin' and not inspecting_state %}
+        <h1 style="font-family: var(--font-heading); font-size: 2.25rem; font-weight: 800;">System Admin Dashboard</h1>
+        <p style="color: var(--text-muted);">Manage state jurisdictions, assign state managers, and inspect regional performance.</p>
+    {% elif inspecting_state or current_user.role == 'state_manager' %}
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h1 style="font-family: var(--font-heading); font-size: 2.25rem; font-weight: 800;">State Manager Dashboard</h1>
+                <p style="color: var(--text-muted);">Jurisdiction: <strong style="color: var(--primary);">{{ state }} State</strong></p>
+            </div>
+            {% if inspecting_state %}
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3);">Admin Inspecting</span>
+                    <a href="{{ url_for('exit_state_inspection') }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Exit Inspection</a>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <h1 style="font-family: var(--font-heading); font-size: 2rem; font-weight: 800;">My Citizen Dashboard</h1>
+        <p style="color: var(--text-muted);">Manage your reported issues, track local updates, and earn solver points.</p>
+    {% endif %}
 </div>
 
-<div class="grid-container" style="grid-template-columns: 1fr;">
-    <div class="glass-card">
-        <div class="glass-card-header">
-            <h2>Your Reported Issues</h2>
-            <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main);">Total: {{ issues|length }}</span>
+{% if current_user.role == 'admin' and not inspecting_state %}
+    <!-- ==================== ADMIN VIEW ==================== -->
+    <div class="grid-container" style="grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+        
+        <!-- States Metrics and Management -->
+        <div class="glass-card">
+            <div class="glass-card-header">
+                <h2>State Jurisdictions</h2>
+                <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main);">States: {{ states_data|length }}</span>
+            </div>
+            
+            {% if states_data %}
+                <div style="display: flex; flex-direction: column; gap: 1.25rem; margin-top: 1rem;">
+                    {% for st in states_data %}
+                        <div class="issue-card" style="padding: 1.25rem; border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                            <div>
+                                <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-main); margin-bottom: 0.25rem;">{{ st.state }}</h3>
+                                <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 1rem; flex-wrap: wrap;">
+                                    <span>Districts with Issues: <strong>{{ st.districts_count }}</strong></span>
+                                    <span>Total Issues: <strong>{{ st.total_issues }}</strong></span>
+                                    <span>State Managers: <strong>{{ st.managers_count }}</strong></span>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                                <div style="text-align: right;">
+                                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.15rem;">Govt. Resolution Rate</span>
+                                    <span style="font-size: 1.15rem; font-weight: 700; color: var(--primary);">{{ st.completion_rate }}%</span>
+                                </div>
+                                <a href="{{ url_for('inspect_state', state=st.state) }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Inspect State</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No active state jurisdictions with issues or managers loaded.</p>
+            {% endif %}
         </div>
         
-        {% if issues %}
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-                {% for issue in issues %}
-                    <div class="issue-card">
-                        <div class="issue-card-content">
-                            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
-                                <span class="badge status-{{ issue.status.lower().replace(' ', '-') }}">{{ issue.status }}</span>
-                                <span class="badge {{ issue.intensity.lower() }}">{{ issue.intensity }} Intensity</span>
-                                <span class="badge" style="background: rgba(255,255,255,0.05); color: var(--text-muted);">{{ issue.category }}</span>
-                            </div>
-                            <h3 style="font-size: 1.15rem; color: var(--text-main); font-family: var(--font-heading);">{{ issue.title }}</h3>
-                            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">{{ issue.description }}</p>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">
-                                Reported on: {{ issue.created_at.strftime('%Y-%m-%d %H:%M') }} | Location: {{ issue.latitude|round(4) }}, {{ issue.longitude|round(4) }}
-                            </div>
-                        </div>
-                        <div class="issue-card-actions">
-                            <button class="btn btn-secondary" onclick="openUpdateModal({{ issue.id }}, '{{ issue.title|escape }}', '{{ issue.status }}')" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                                Add Update Log
-                            </button>
-                        </div>
-                    </div>
-                {% endfor %}
+        <!-- Add State Manager Card -->
+        <div class="glass-card" style="height: fit-content;">
+            <div class="glass-card-header">
+                <h2>Add State Manager</h2>
             </div>
-        {% else: %}
-            <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                <p>You haven't reported any issues yet.</p>
-                <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top: 1rem;">Go to Map & Report</a>
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Update Status Log Modal -->
-<div id="update-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 class="modal-title" id="update-modal-title">Log Issue Update</h3>
-            <button class="close-btn" onclick="closeUpdateModal()">&times;</button>
-        </div>
-        <form id="update-form" onsubmit="handleUpdateSubmit(event)">
-            <input type="hidden" id="update-issue-id" name="issue_id">
-            <div class="modal-body">
+            
+            <form action="{{ url_for('create_state_manager') }}" method="POST" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
                 <div class="form-group">
-                    <label for="update-status">Update Status</label>
-                    <select id="update-status" name="status" class="form-control">
-                        <option value="Open">Open</option>
-                        <option value="Under Review">Under Review</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Resolved">Resolved (Closes Issue)</option>
-                    </select>
+                    <label for="username">Manager Username</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="e.g. state_mgr_karnataka" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="update-content">Description of progress / resolution</label>
-                    <textarea id="update-content" name="content" class="form-control" rows="4" placeholder="e.g. Workers are on site patching the asphalt. OR Verified that the streetlight bulb has been replaced and works perfectly." required></textarea>
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="e.g. karnataka@govt.in" required>
                 </div>
-                <p style="font-size: 0.75rem; color: var(--text-muted);">Resolving an issue grants bonus points to both the reporter (+50 pts) and you (+25 pts)!</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeUpdateModal()">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Update Log</button>
-            </div>
-        </form>
+                
+                <div class="form-group">
+                    <label for="password">Login Password</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Create temporary password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="state">Assigned State</label>
+                    <select id="state" name="state" class="form-control" required>
+                        <option value="" disabled selected>Select a State</option>
+                        <option value="Karnataka">Karnataka</option>
+                        <option value="Maharashtra">Maharashtra</option>
+                        <option value="Delhi">Delhi</option>
+                        <option value="Tamil Nadu">Tamil Nadu</option>
+                        <option value="Telangana">Telangana</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 600; margin-top: 0.5rem;">Register Manager Account</button>
+            </form>
+        </div>
     </div>
-</div>
+
+{% elif inspecting_state or current_user.role == 'state_manager' %}
+    <!-- ==================== STATE MANAGER VIEW ==================== -->
+    <div class="grid-container" style="grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+        
+        <!-- District Standings / Charts -->
+        <div class="glass-card">
+            <div class="glass-card-header">
+                <h2>District Operations in {{ state }}</h2>
+                <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main);">Districts: {{ districts_data|length }}</span>
+            </div>
+            
+            {% if districts_data %}
+                <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1rem;">
+                    {% for dist in districts_data %}
+                        <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <div>
+                                    <h3 style="font-family: var(--font-heading); font-size: 1.15rem; color: var(--text-main);">{{ dist.district }}</h3>
+                                    <span style="font-size: 0.8rem; color: var(--text-muted);">Total Issues: <strong>{{ dist.total_issues }}</strong></span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <div style="text-align: right;">
+                                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary);">{{ dist.completion_rate }}% Resolved</span>
+                                    </div>
+                                    <a href="{{ url_for('inspect_district', district=dist.district, state=state) }}" class="btn btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem;">Inspect District Map</a>
+                                </div>
+                            </div>
+                            <!-- Styled custom progress bar -->
+                            <div style="height: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; overflow: hidden;">
+                                <div style="height: 100%; width: {{ dist.completion_rate }}%; background: linear-gradient(90deg, var(--secondary), var(--primary)); border-radius: 4px; box-shadow: 0 0 10px var(--primary-glow);"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No active districts with issues or managers loaded in {{ state }}.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Add District Manager Card -->
+        <div class="glass-card" style="height: fit-content;">
+            <div class="glass-card-header">
+                <h2>Add District Manager</h2>
+            </div>
+            
+            <form action="{{ url_for('create_district_manager') }}" method="POST" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+                <div class="form-group">
+                    <label for="username">Manager Username</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="e.g. dist_mgr_blr" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="e.g. bangalore.mgr@govt.in" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Login Password</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Create temporary password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="district">Assigned District</label>
+                    <select id="district-select" name="district" class="form-control" required>
+                        <option value="" disabled selected>Select a District</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 600; margin-top: 0.5rem;">Register District Manager</button>
+            </form>
+        </div>
+    </div>
+
+{% else %}
+    <!-- ==================== CITIZEN VIEW ==================== -->
+    <div class="grid-container" style="grid-template-columns: 1fr;">
+        <div class="glass-card">
+            <div class="glass-card-header">
+                <h2>Your Reported Issues</h2>
+                <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main);">Total: {{ issues|length }}</span>
+            </div>
+            
+            {% if issues %}
+                <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+                    {% for issue in issues %}
+                        <div class="issue-card">
+                            <div class="issue-card-content">
+                                <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                                    <span class="badge status-{{ issue.status.lower().replace(' ', '-') }}">{{ issue.status }}</span>
+                                    <span class="badge {{ issue.intensity.lower() }}">{{ issue.intensity }} Intensity</span>
+                                    <span class="badge" style="background: rgba(255,255,255,0.05); color: var(--text-muted);">{{ issue.category }}</span>
+                                    <span class="badge" style="background: rgba(0, 242, 254, 0.1); color: var(--primary); border: 1px solid rgba(0, 242, 254, 0.2);">
+                                        Govt: {{ issue.govt_status }}
+                                    </span>
+                                </div>
+                                <h3 style="font-size: 1.15rem; color: var(--text-main); font-family: var(--font-heading);">{{ issue.title }}</h3>
+                                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">{{ issue.description }}</p>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                    Reported on: {{ issue.created_at.strftime('%Y-%m-%d %H:%M') }} | Jurisdiction: {{ issue.district }}, {{ issue.state }}
+                                </div>
+                            </div>
+                            <div class="issue-card-actions">
+                                <a href="{{ url_for('index') }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; gap: 0.25rem;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    View on Map
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else: %}
+                <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <p>You haven't reported any issues yet.</p>
+                    <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top: 1rem;">Go to Map & Report</a>
+                </div>
+            {% endif %}
+    </div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
-    function openUpdateModal(issueId, title, currentStatus) {
-        document.getElementById('update-issue-id').value = issueId;
-        document.getElementById('update-modal-title').innerText = 'Log Update for: ' + title;
-        document.getElementById('update-status').value = currentStatus;
-        document.getElementById('update-content').value = '';
-        document.getElementById('update-modal').classList.add('show');
-    }
-    
-    function closeUpdateModal() {
-        document.getElementById('update-modal').classList.remove('show');
-    }
-    
-    function handleUpdateSubmit(e) {
-        e.preventDefault();
-        const issueId = document.getElementById('update-issue-id').value;
-        const formData = new FormData(document.getElementById('update-form'));
+    document.addEventListener('DOMContentLoaded', () => {
+        const districtsMap = {
+            "Karnataka": ["Bangalore Urban", "Bangalore Rural", "Mysore", "Mangalore", "Belgaum", "Dharwad"],
+            "Maharashtra": ["Mumbai City", "Mumbai Suburban", "Pune", "Nagpur", "Thane", "Nashik"],
+            "Delhi": ["New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi"],
+            "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem"],
+            "Telangana": ["Hyderabad", "Medchal-Malkajgiri", "Rangareddy", "Warangal"]
+        };
         
-        fetch(`/api/issues/${issueId}/update`, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                closeUpdateModal();
-                window.location.reload();
-            } else {
-                alert(data.error || 'Failed to submit log update.');
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert('Error connecting to server.');
-        });
-    }
+        const stateName = "{{ state }}";
+        const districtSelect = document.getElementById('district-select');
+        
+        if (districtSelect) {
+            const districts = districtsMap[stateName] || ["District 1", "District 2", "District 3"];
+            districts.forEach(dist => {
+                const opt = document.createElement('option');
+                opt.value = dist;
+                opt.textContent = dist;
+                districtSelect.appendChild(opt);
+            });
+        }
+    });
 </script>
 {% endblock %}

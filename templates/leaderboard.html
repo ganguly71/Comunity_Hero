@@ -4,37 +4,133 @@
 
 {% block content %}
 <div style="margin-bottom: 2rem; text-align: center;">
-    <h1 style="font-family: var(--font-heading); font-size: 2.25rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Community Leaderboard</h1>
-    <p style="color: var(--text-muted); max-width: 600px; margin: 0.5rem auto 0 auto;">Citizens receive points for reporting verified issues (+15), upvoting active issues (+5), submitting helpful comments (+2), and logging resolutions (+25/50).</p>
+    <h1 style="font-family: var(--font-heading); font-size: 2.25rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Performance Leaderboard</h1>
+    <p style="color: var(--text-muted); max-width: 600px; margin: 0.5rem auto 0 auto;">Compare community performance, track active solving rates, and reward the top contributing citizens.</p>
+</div>
+
+<!-- Tab Navigation buttons -->
+<div style="display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 2rem; flex-wrap: wrap;">
+    <button class="btn btn-primary tab-btn" data-tab="citizens" onclick="showTab('citizens')">🏆 Top Citizens</button>
+    <button class="btn btn-secondary tab-btn" data-tab="districts" onclick="showTab('districts')">📍 District Standings ({{ selected_state }})</button>
+    <button class="btn btn-secondary tab-btn" data-tab="states" onclick="showTab('states')">🗺️ Inter-State Standings</button>
 </div>
 
 <div style="max-width: 800px; margin: 0 auto; width: 100%;">
-    <div class="glass-card">
+    
+    <!-- Tab 1: Top Citizens -->
+    <div id="tab-citizens" class="glass-card">
         <div class="glass-card-header">
-            <h2>Top Community Members</h2>
-            <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);">
-                🏆 Top Citizens
+            <h2>Top Citizens</h2>
+            <span class="badge" style="background: rgba(0, 242, 254, 0.1); color: var(--primary); border: 1px solid rgba(0, 242, 254, 0.2);">
+                Based on active contributions
             </span>
         </div>
         
-        <div class="leaderboard-list">
-            {% for user in users %}
-                <div class="leaderboard-row">
-                    <div class="leaderboard-rank">
-                        #{{ loop.index }}
+        <div class="leaderboard-list" style="margin-top: 1rem;">
+            {% if users %}
+                {% for u in users %}
+                    <div class="leaderboard-row" style="display: flex; justify-content: space-between; padding: 1rem; border-bottom: 1px solid var(--border-color); align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <span style="font-weight: 800; color: var(--primary); font-size: 1.15rem; width: 30px;">#{{ loop.index }}</span>
+                            <span style="color: var(--text-main); font-weight: 600;">@{{ u.username }}</span>
+                        </div>
+                        <span class="badge" style="background: rgba(255,255,255,0.05); font-weight: 700; color: var(--text-main);">{{ u.points }} pts</span>
                     </div>
-                    <div class="leaderboard-user">
-                        @{{ user.username }}
-                        {% if user.role == 'authority' %}
-                            <span class="badge" style="margin-left: 0.5rem; background: rgba(0, 242, 254, 0.15); color: var(--primary); border: 1px solid rgba(0, 242, 254, 0.3);">City Officer</span>
-                        {% endif %}
-                    </div>
-                    <div class="leaderboard-points">
-                        {{ user.points }} pts
-                    </div>
-                </div>
-            {% endfor %}
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No citizen records found.</p>
+            {% endif %}
         </div>
     </div>
+
+    <!-- Tab 2: District Standings -->
+    <div id="tab-districts" class="glass-card" style="display: none;">
+        <div class="glass-card-header">
+            <h2>District Completion Rates</h2>
+            <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2);">
+                {{ selected_state }} State
+            </span>
+        </div>
+        
+        <div class="leaderboard-list" style="margin-top: 1rem;">
+            {% if district_standings %}
+                {% for d in district_standings %}
+                    <div class="leaderboard-row" style="display: flex; flex-direction: column; padding: 1.25rem; border-bottom: 1px solid var(--border-color); gap: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="font-weight: 800; color: var(--primary); font-size: 1.15rem; width: 30px;">#{{ loop.index }}</span>
+                                <span style="color: var(--text-main); font-weight: 600; font-family: var(--font-heading); font-size: 1.1rem;">{{ d.district }}</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.15rem;">{{ d.completed }}/{{ d.total }} Completed</span>
+                                <span style="font-weight: 800; color: var(--primary); font-size: 1.1rem;">{{ d.rate }}%</span>
+                            </div>
+                        </div>
+                        <div style="height: 6px; background: rgba(255,255,255,0.04); border-radius: 3px; overflow: hidden; width: 100%;">
+                            <div style="height: 100%; width: {{ d.rate }}%; background: linear-gradient(90deg, var(--secondary), var(--primary));"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No district reports registered in {{ selected_state }}.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tab 3: Inter-State Standings -->
+    <div id="tab-states" class="glass-card" style="display: none;">
+        <div class="glass-card-header">
+            <h2>State Completion Standings</h2>
+            <span class="badge" style="background: rgba(167, 139, 250, 0.15); color: #a78bfa; border: 1px solid rgba(167, 139, 250, 0.25);">
+                National overview
+            </span>
+        </div>
+        
+        <div class="leaderboard-list" style="margin-top: 1rem;">
+            {% if state_standings %}
+                {% for s in state_standings %}
+                    <div class="leaderboard-row" style="display: flex; flex-direction: column; padding: 1.25rem; border-bottom: 1px solid var(--border-color); gap: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="font-weight: 800; color: var(--primary); font-size: 1.15rem; width: 30px;">#{{ loop.index }}</span>
+                                <span style="color: var(--text-main); font-weight: 600; font-family: var(--font-heading); font-size: 1.1rem;">{{ s.state }} State</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.15rem;">{{ s.completed }}/{{ s.total }} Resolved</span>
+                                <span style="font-weight: 800; color: var(--primary); font-size: 1.1rem;">{{ s.rate }}%</span>
+                            </div>
+                        </div>
+                        <div style="height: 6px; background: rgba(255,255,255,0.04); border-radius: 3px; overflow: hidden; width: 100%;">
+                            <div style="height: 100%; width: {{ s.rate }}%; background: linear-gradient(90deg, var(--secondary), var(--primary));"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No state standings data available.</p>
+            {% endif %}
+        </div>
+    </div>
+
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function showTab(tabId) {
+        document.getElementById('tab-citizens').style.display = tabId === 'citizens' ? 'block' : 'none';
+        document.getElementById('tab-districts').style.display = tabId === 'districts' ? 'block' : 'none';
+        document.getElementById('tab-states').style.display = tabId === 'states' ? 'block' : 'none';
+        
+        const btns = document.querySelectorAll('.tab-btn');
+        btns.forEach(btn => {
+            if (btn.getAttribute('data-tab') === tabId) {
+                btn.classList.add('btn-primary');
+                btn.classList.remove('btn-secondary');
+            } else {
+                btn.classList.add('btn-secondary');
+                btn.classList.remove('btn-primary');
+            }
+        });
+    }
+</script>
 {% endblock %}

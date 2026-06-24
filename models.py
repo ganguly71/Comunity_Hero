@@ -13,13 +13,20 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     points = db.Column(db.Integer, default=0)
-    role = db.Column(db.String(20), default='citizen') # 'citizen' or 'authority'
+    role = db.Column(db.String(20), default='citizen') # 'citizen', 'district_manager', 'state_manager', 'admin'
+    state = db.Column(db.String(100), nullable=True)
+    district = db.Column(db.String(100), nullable=True)
+    address = db.Column(db.Text, nullable=True)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     
     # Relationships
     issues = db.relationship('Issue', backref='reporter', lazy=True)
     comments = db.relationship('Comment', backref='author', lazy=True)
     votes = db.relationship('Vote', backref='voter', lazy=True)
     update_logs = db.relationship('UpdateLog', backref='logger', lazy=True)
+    created_users = db.relationship('User', backref=db.backref('creator', remote_side=[id]), lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -41,6 +48,11 @@ class Issue(db.Model):
     status = db.Column(db.String(20), default='Open') # 'Open', 'Under Review', 'In Progress', 'Resolved'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    state = db.Column(db.String(100), nullable=True)
+    district = db.Column(db.String(100), nullable=True)
+    govt_status = db.Column(db.String(50), default='NOT VISITED') # 'NOT VISITED', 'ONGOING', 'DONE'
+    govt_status_updated_at = db.Column(db.DateTime, nullable=True)
     
     # Relationships
     comments = db.relationship('Comment', backref='issue', lazy=True, cascade="all, delete-orphan")
