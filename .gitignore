@@ -1,0 +1,21 @@
+# Frontend Node dependencies
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Editor directories
+.vscode/
+.idea/
+
+# Backend virtual environments and logs
+backend/venv/
+backend/env/
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+
+# Local Environment Variables
+.env
+.env.production
+.env.development
