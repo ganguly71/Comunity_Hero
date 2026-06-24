@@ -15,21 +15,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Initialize Leaflet Map
 function initMap() {
-    // Dark mode tiles from CartoDB (completely free, no API key needed)
+    // Vibrant & realistic CartoDB Voyager tiles (completely free, no API key needed)
     map = L.map('map').setView([defaultLat, defaultLng], 15);
     
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         subdomains: 'abcd',
         maxZoom: 20
     }).addTo(map);
 
-    // Attempt to center map on user's current location
+    // Attempt to center map on user's current location and place a marker
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((position) => {
             const userLat = position.coords.latitude;
             const userLng = position.coords.longitude;
             map.setView([userLat, userLng], 15);
+            
+            // Add a special glowing pulse marker for current location
+            const userIcon = L.divIcon({
+                className: 'user-location-marker',
+                html: '<div style="background-color: #00f2fe; width: 14px; height: 14px; border-radius: 50%; border: 3px solid #ffffff; box-shadow: 0 0 16px #00f2fe; animation: pulse 2s infinite;"></div>',
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            });
+            
+            L.marker([userLat, userLng], { icon: userIcon })
+                .addTo(map)
+                .bindTooltip("You are here", { permanent: false, direction: 'top' });
+                
         }, (err) => {
             console.warn("Geolocation service failed or permission denied. Defaulting coordinates.");
         });
