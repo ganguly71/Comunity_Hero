@@ -202,6 +202,8 @@ function selectIssue(issue) {
                 img.style.borderRadius = '12px';
                 img.style.border = '1px solid var(--border-color)';
                 img.style.marginBottom = '0.5rem';
+                img.style.cursor = 'pointer';
+                img.onclick = () => openLightbox(cleanUrl);
                 mediaContainer.appendChild(img);
             }
         });
@@ -440,5 +442,19 @@ function locateUser() {
         } else {
             alert("Geolocation is not supported by your browser.");
         }
+    }
+}
+
+// Lightbox modal operations for image enlargement
+function openLightbox(url) {
+    const lightbox = document.getElementById('media-lightbox');
+    const img = document.getElementById('lightbox-img');
+    img.src = url;
+    lightbox.classList.add('show');
+}
+
+function closeLightbox(e) {
+    if (!e || e.target.id !== 'lightbox-img') {
+        document.getElementById('media-lightbox').classList.remove('show');
     }
 }

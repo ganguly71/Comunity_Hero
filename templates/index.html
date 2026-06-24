@@ -159,6 +159,12 @@
         </form>
     </div>
 </div>
+
+<!-- Lightbox Modal for Enlarged Images -->
+<div id="media-lightbox" class="modal" onclick="closeLightbox(event)" style="background: rgba(3, 7, 18, 0.95); display: flex; align-items: center; justify-content: center; z-index: 1100;">
+    <button class="close-btn" style="position: absolute; top: 20px; right: 30px; font-size: 2.5rem; color: var(--text-main);" onclick="closeLightbox()">&times;</button>
+    <img id="lightbox-img" src="" style="max-width: 90%; max-height: 85vh; border-radius: 8px; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.8); object-fit: contain;">
+</div>
 {% endblock %}
 
 {% block scripts %}
