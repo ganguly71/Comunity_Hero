@@ -285,33 +285,37 @@ def report_issue():
     # Auto categorization using Gemini API (with local rule fallback)
     category = ai_categorize(title, description)
     
-    image_filename = None
+    uploaded_urls = []
     if 'image' in request.files:
-        file = request.files['image']
-        if file and allowed_file(file.filename):
-            filename = secure_filename(f"{datetime.utcnow().timestamp()}_{file.filename}")
-            
-            if supabase_client:
-                try:
-                    # Upload directly to Supabase storage bucket 'issue-media'
-                    file_data = file.read()
-                    content_type = file.mimetype
-                    supabase_client.storage.from_('issue-media').upload(
-                        path=filename,
-                        file=file_data,
-                        file_options={"content-type": content_type}
-                    )
-                    # Retrieve public URL
-                    image_filename = supabase_client.storage.from_('issue-media').get_public_url(filename)
-                except Exception as e:
-                    print(f"Supabase storage upload failed: {e}. Falling back to local storage.")
-                    file.seek(0)
+        files = request.files.getlist('image')
+        for file in files:
+            if file and allowed_file(file.filename):
+                filename = secure_filename(f"{datetime.utcnow().timestamp()}_{file.filename}")
+                
+                if supabase_client:
+                    try:
+                        file_data = file.read()
+                        content_type = file.mimetype
+                        supabase_client.storage.from_('issue-media').upload(
+                            path=filename,
+                            file=file_data,
+                            file_options={"content-type": content_type}
+                        )
+                        url = supabase_client.storage.from_('issue-media').get_public_url(filename)
+                        uploaded_urls.append(url)
+                    except Exception as e:
+                        print(f"Supabase storage upload failed: {e}. Falling back to local storage.")
+                        file.seek(0)
+                        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                        uploaded_urls.append(filename)
+                    finally:
+                        file.close()
+                else:
                     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                    image_filename = filename
-            else:
-                # Local fallback
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                image_filename = filename
+                    uploaded_urls.append(filename)
+                    file.close()
+                    
+    image_filename = ",".join(uploaded_urls) if uploaded_urls else None
 
     issue = Issue(
         title=title,

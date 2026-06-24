@@ -3,6 +3,8 @@ let map;
 let markers = [];
 let activeIssueId = null;
 let activeIssueData = null;
+let allIssues = [];
+let currentUserLocation = null;
 
 // Default coordinates (centered on seeded Bangalore area)
 const defaultLat = 12.9716;
@@ -15,8 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Initialize Leaflet Map
 function initMap() {
-    // Create map instance
-    map = L.map('map').setView([defaultLat, defaultLng], 15);
+    // Create map instance with zoom constraints
+    map = L.map('map', { minZoom: 2, maxZoom: 18 }).setView([defaultLat, defaultLng], 15);
 
     // Esri World Imagery (Vibrant Satellite)
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
@@ -36,6 +38,7 @@ function initMap() {
         navigator.geolocation.getCurrentPosition((position) => {
             const userLat = position.coords.latitude;
             const userLng = position.coords.longitude;
+            currentUserLocation = [userLat, userLng];
             map.setView([userLat, userLng], 15);
             
             // Add a special glowing pulse marker for current location
@@ -90,33 +93,46 @@ function loadIssues() {
     fetch('/api/issues')
         .then(response => response.json())
         .then(data => {
-            // Clear existing markers
-            markers.forEach(m => map.removeLayer(m));
-            markers = [];
-
-            data.forEach(issue => {
-                const marker = L.marker([issue.latitude, issue.longitude], {
-                    icon: getCategoryIcon(issue.category, issue.intensity)
-                }).addTo(map);
-
-                marker.on('click', () => {
-                    selectIssue(issue);
-                });
-
-                // Tooltip on hover
-                marker.bindTooltip(`
-                    <strong style="color:#f3f4f6; font-family:'Outfit';">${issue.title}</strong><br>
-                    <span style="color:#9ca3af; font-size:0.8rem;">${issue.category} | ${issue.status}</span>
-                `, {
-                    direction: 'top',
-                    opacity: 0.9,
-                    className: 'glass-tooltip'
-                });
-
-                markers.push(marker);
-            });
+            allIssues = data;
+            renderMarkers();
         })
         .catch(err => console.error('Error fetching issues:', err));
+}
+
+// Render markers on the map dynamically supporting status filters
+function renderMarkers() {
+    // Clear existing markers
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
+    const showResolved = document.getElementById('toggle-resolved').checked;
+
+    allIssues.forEach(issue => {
+        // Skip resolved issues if filter checkbox is not active
+        if (issue.status === 'Resolved' && !showResolved) {
+            return;
+        }
+
+        const marker = L.marker([issue.latitude, issue.longitude], {
+            icon: getCategoryIcon(issue.category, issue.intensity)
+        }).addTo(map);
+
+        marker.on('click', () => {
+            selectIssue(issue);
+        });
+
+        // Tooltip on hover
+        marker.bindTooltip(`
+            <strong style="color:#f3f4f6; font-family:'Outfit';">${issue.title}</strong><br>
+            <span style="color:#9ca3af; font-size:0.8rem;">${issue.category} | ${issue.status}</span>
+        `, {
+            direction: 'top',
+            opacity: 0.9,
+            className: 'glass-tooltip'
+        });
+
+        markers.push(marker);
+    });
 }
 
 // Select issue and show details in sidebar
@@ -156,24 +172,39 @@ function selectIssue(issue) {
     document.getElementById('issue-date').innerText = issue.created_at;
     document.getElementById('issue-score').innerText = issue.score;
 
-    // Image/Video preview
-    const imgEl = document.getElementById('issue-image');
-    const videoEl = document.getElementById('issue-video');
+    // Image/Video preview (supporting multiple media files)
+    const mediaContainer = document.getElementById('media-preview');
+    mediaContainer.innerHTML = '';
     if (issue.image_url) {
-        const fileExt = issue.image_url.split('.').pop().toLowerCase();
-        const isVideo = ['mp4', 'mov', 'avi'].includes(fileExt);
-        if (isVideo) {
-            videoEl.src = issue.image_url;
-            videoEl.style.display = 'block';
-            imgEl.style.display = 'none';
-        } else {
-            imgEl.src = issue.image_url;
-            imgEl.style.display = 'block';
-            videoEl.style.display = 'none';
-        }
-    } else {
-        imgEl.style.display = 'none';
-        videoEl.style.display = 'none';
+        const urls = issue.image_url.split(',');
+        urls.forEach(url => {
+            if (!url) return;
+            const cleanUrl = url.trim();
+            const fileExt = cleanUrl.split('.').pop().split('?')[0].toLowerCase();
+            const isVideo = ['mp4', 'mov', 'avi'].includes(fileExt);
+            
+            if (isVideo) {
+                const video = document.createElement('video');
+                video.src = cleanUrl;
+                video.controls = true;
+                video.style.width = '100%';
+                video.style.maxHeight = '200px';
+                video.style.borderRadius = '12px';
+                video.style.border = '1px solid var(--border-color)';
+                video.style.marginBottom = '0.5rem';
+                mediaContainer.appendChild(video);
+            } else {
+                const img = document.createElement('img');
+                img.src = cleanUrl;
+                img.style.width = '100%';
+                img.style.maxHeight = '200px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '12px';
+                img.style.border = '1px solid var(--border-color)';
+                img.style.marginBottom = '0.5rem';
+                mediaContainer.appendChild(img);
+            }
+        });
     }
 
     // Update vote buttons active state
@@ -390,4 +421,24 @@ function searchLocation() {
             console.error('Search error:', err);
             alert('Could not search location. Please try again.');
         });
+}
+
+// Pan map back to user's tracked current location
+function locateUser() {
+    if (currentUserLocation) {
+        map.setView(currentUserLocation, 16);
+    } else {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                currentUserLocation = [userLat, userLng];
+                map.setView(currentUserLocation, 16);
+            }, (err) => {
+                alert("Could not retrieve current position. Check your browser location permissions.");
+            });
+        } else {
+            alert("Geolocation is not supported by your browser.");
+        }
+    }
 }

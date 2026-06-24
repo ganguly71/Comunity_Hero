@@ -19,10 +19,19 @@
         
         <div class="map-container" style="position: relative;">
             <div id="map"></div>
-            <!-- Glassmorphic Location Search Bar -->
-            <div id="map-search-bar" style="position: absolute; top: 12px; left: 60px; z-index: 1000; display: flex; gap: 0.5rem; background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: var(--glass-shadow); max-width: 320px; width: calc(100% - 80px);">
-                <input type="text" id="search-input" class="form-control" placeholder="Search city or area..." style="padding: 0.4rem 0.8rem; font-size: 0.85rem; height: auto;" onkeydown="if(event.key === 'Enter') searchLocation()">
-                <button type="button" class="btn btn-primary" onclick="searchLocation()" style="padding: 0.4rem 1rem; font-size: 0.85rem;">Go</button>
+            <!-- Glassmorphic Location Search and Control Bar -->
+            <div id="map-search-bar" style="position: absolute; top: 12px; left: 60px; z-index: 1000; display: flex; flex-direction: column; gap: 0.5rem; background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 0.75rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: var(--glass-shadow); max-width: 350px; width: calc(100% - 80px);">
+                <div style="display: flex; gap: 0.4rem;">
+                    <input type="text" id="search-input" class="form-control" placeholder="Search city or area..." style="padding: 0.4rem 0.8rem; font-size: 0.85rem; height: auto;" onkeydown="if(event.key === 'Enter') searchLocation()">
+                    <button type="button" class="btn btn-primary" onclick="searchLocation()" style="padding: 0.4rem 0.85rem; font-size: 0.85rem;">Go</button>
+                    <button type="button" class="btn btn-secondary" onclick="locateUser()" title="Locate Me" style="padding: 0.4rem 0.6rem; display: flex; align-items: center; justify-content: center;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path></svg>
+                    </button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding-left: 0.25rem;">
+                    <input type="checkbox" id="toggle-resolved" onchange="renderMarkers()" style="cursor: pointer; width: 14px; height: 14px; accent-color: var(--primary);">
+                    <label for="toggle-resolved" style="font-size: 0.75rem; color: var(--text-muted); cursor: pointer; user-select: none; font-weight: 600;">Show Resolved Issues</label>
+                </div>
             </div>
         </div>
     </div>
@@ -127,8 +136,8 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="report-image">Upload Photo/Video (Optional)</label>
-                    <input type="file" id="report-image" name="image" class="form-control" accept="image/*,video/*">
+                    <label for="report-image">Upload Photo/Video (Optional - Multiple allowed)</label>
+                    <input type="file" id="report-image" name="image" class="form-control" accept="image/*,video/*" multiple>
                 </div>
                 
                 <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem;">
