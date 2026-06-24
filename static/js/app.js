@@ -24,6 +24,17 @@ function initMap() {
         maxZoom: 20
     }).addTo(map);
 
+    // Attempt to center map on user's current location
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+            map.setView([userLat, userLng], 15);
+        }, (err) => {
+            console.warn("Geolocation service failed or permission denied. Defaulting coordinates.");
+        });
+    }
+
     // Map Click: Open report modal with coordinates
     map.on('click', (e) => {
         openReportModal(e.latlng.lat, e.latlng.lng);
@@ -336,4 +347,27 @@ function handleReportSubmit(e) {
         console.error(err);
         alert('Error connecting to server.');
     });
+}
+
+// Search location using OpenStreetMap Nominatim API (100% free geocoding)
+function searchLocation() {
+    const input = document.getElementById('search-input');
+    const query = input.value.trim();
+    if (!query) return;
+
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.length > 0) {
+                const lat = parseFloat(data[0].lat);
+                const lon = parseFloat(data[0].lon);
+                map.setView([lat, lon], 14);
+            } else {
+                alert('Location not found. Please try a different search.');
+            }
+        })
+        .catch(err => {
+            console.error('Search error:', err);
+            alert('Could not search location. Please try again.');
+        });
 }

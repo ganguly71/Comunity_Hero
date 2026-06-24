@@ -17,8 +17,13 @@
             </button>
         </div>
         
-        <div class="map-container">
+        <div class="map-container" style="position: relative;">
             <div id="map"></div>
+            <!-- Glassmorphic Location Search Bar -->
+            <div id="map-search-bar" style="position: absolute; top: 12px; left: 60px; z-index: 1000; display: flex; gap: 0.5rem; background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: var(--glass-shadow); max-width: 320px; width: calc(100% - 80px);">
+                <input type="text" id="search-input" class="form-control" placeholder="Search city or area..." style="padding: 0.4rem 0.8rem; font-size: 0.85rem; height: auto;" onkeydown="if(event.key === 'Enter') searchLocation()">
+                <button type="button" class="btn btn-primary" onclick="searchLocation()" style="padding: 0.4rem 1rem; font-size: 0.85rem;">Go</button>
+            </div>
         </div>
     </div>
     
