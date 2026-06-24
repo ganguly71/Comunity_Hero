@@ -195,33 +195,33 @@ export default function App() {
         users: Array.isArray(usersData) ? usersData.map(u => ({
           id: u.id,
           email: u.email,
-          fullName: u.full_name,
+          fullName: u.full_name || u.fullName,
           phone: u.phone,
-          avatarUrl: u.avatar_url,
+          avatarUrl: u.avatar_url || u.avatarUrl,
           role: u.role,
-          wardId: u.ward_id,
-          xpPoints: u.xp_points,
-          badgeIds: u.badge_ids || [],
-          reportsCount: u.reports_count,
-          verifiedCount: u.verified_count,
-          createdAt: u.created_at
+          wardId: u.ward_id || u.wardId,
+          xpPoints: u.xp_points !== undefined ? u.xp_points : (u.xpPoints || 0),
+          badgeIds: u.badge_ids || u.badgeIds || [],
+          reportsCount: u.reports_count !== undefined ? u.reports_count : (u.reportsCount || 0),
+          verifiedCount: u.verified_count !== undefined ? u.verified_count : (u.verifiedCount || 0),
+          createdAt: u.created_at || u.createdAt
         })) : prev.users,
         comments: Array.isArray(commentsData) ? commentsData.map(c => ({
           id: c.id,
-          issueId: c.issue_id,
-          userId: c.user_id,
+          issueId: c.issue_id || c.issueId,
+          userId: c.user_id || c.userId,
           content: c.content,
-          isAuthority: c.is_authority,
-          createdAt: c.created_at
+          isAuthority: c.is_authority !== undefined ? c.is_authority : c.isAuthority,
+          createdAt: c.created_at || c.createdAt
         })) : prev.comments,
         statusHistory: Array.isArray(historyData) ? historyData.map(h => ({
           id: h.id,
-          issueId: h.issue_id,
-          changedBy: h.changed_by,
-          oldStatus: h.old_status,
-          newStatus: h.new_status,
+          issueId: h.issue_id || h.issueId,
+          changedBy: h.changed_by || h.changedBy,
+          oldStatus: h.old_status || h.oldStatus,
+          newStatus: h.new_status || h.newStatus,
           note: h.note,
-          createdAt: h.created_at
+          createdAt: h.created_at || h.createdAt
         })) : prev.statusHistory
       }));
       
@@ -229,16 +229,16 @@ export default function App() {
         setActiveUser({
           id: activeUserData.id,
           email: activeUserData.email,
-          fullName: activeUserData.full_name,
+          fullName: activeUserData.full_name || activeUserData.fullName,
           phone: activeUserData.phone,
-          avatarUrl: activeUserData.avatar_url,
+          avatarUrl: activeUserData.avatar_url || activeUserData.avatarUrl,
           role: activeUserData.role,
-          wardId: activeUserData.ward_id,
-          xpPoints: activeUserData.xp_points,
-          badgeIds: activeUserData.badge_ids || [],
-          reportsCount: activeUserData.reports_count,
-          verifiedCount: activeUserData.verified_count,
-          createdAt: activeUserData.created_at
+          wardId: activeUserData.ward_id || activeUserData.wardId,
+          xpPoints: activeUserData.xp_points !== undefined ? activeUserData.xp_points : (activeUserData.xpPoints || 0),
+          badgeIds: activeUserData.badge_ids || activeUserData.badgeIds || [],
+          reportsCount: activeUserData.reports_count !== undefined ? activeUserData.reports_count : (activeUserData.reportsCount || 0),
+          verifiedCount: activeUserData.verified_count !== undefined ? activeUserData.verified_count : (activeUserData.verifiedCount || 0),
+          createdAt: activeUserData.created_at || activeUserData.createdAt
         });
       }
     } catch (e) {
@@ -993,7 +993,7 @@ export default function App() {
               />
               <div style={{ display: 'none', md: 'block' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '500', color: 'white', display: 'block' }}>
-                  {activeUser.fullName.split(' ')[0]}
+                  {activeUser?.fullName ? activeUser.fullName.split(' ')[0] : 'Hero'}
                 </span>
                 <span style={{ fontSize: '0.65rem', color: 'hsl(var(--text-muted))', display: 'block' }}>
                   {activeUser.role.toUpperCase()}
@@ -2445,7 +2445,7 @@ export default function App() {
                       }}>2</span>
                     </div>
                     <span style={{ fontSize: '0.85rem', color: 'white', fontWeight: 'bold', marginTop: '8px' }}>
-                      {db.users[1].fullName.split(' ')[0]}
+                      {db.users[1]?.fullName ? db.users[1].fullName.split(' ')[0] : 'Hero'}
                     </span>
                     <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{db.users[1].xpPoints} XP</span>
                     <div style={{ height: '50px', width: '80px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px 6px 0 0', marginTop: '10px' }}></div>
@@ -2474,7 +2474,7 @@ export default function App() {
                       }}>1</span>
                     </div>
                     <span style={{ fontSize: '0.95rem', color: 'white', fontWeight: 'bold', marginTop: '8px' }}>
-                      {db.users[2].fullName.split(' ')[0]}
+                      {db.users[2]?.fullName ? db.users[2].fullName.split(' ')[0] : 'Hero'}
                     </span>
                     <span style={{ fontSize: '0.8rem', color: '#a78bfa' }}>{db.users[2].xpPoints} XP</span>
                     <div style={{ height: '80px', width: '100px', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: '8px 8px 0 0', marginTop: '10px' }}></div>
@@ -2497,7 +2497,7 @@ export default function App() {
                       }}>3</span>
                     </div>
                     <span style={{ fontSize: '0.85rem', color: 'white', fontWeight: 'bold', marginTop: '8px' }}>
-                      {db.users[0].fullName.split(' ')[0]}
+                      {db.users[0]?.fullName ? db.users[0].fullName.split(' ')[0] : 'Hero'}
                     </span>
                     <span style={{ fontSize: '0.75rem', color: '#b45309' }}>{db.users[0].xpPoints} XP</span>
                     <div style={{ height: '35px', width: '80px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px 6px 0 0', marginTop: '10px' }}></div>
