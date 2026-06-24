@@ -43,7 +43,10 @@
                 <span id="issue-status" class="badge status-open">Open</span>
             </div>
             
-            <img id="issue-image" src="" alt="Issue Image" style="display: none;">
+            <div id="media-preview" style="margin-bottom: 0.5rem;">
+                <img id="issue-image" src="" alt="Issue Image" style="display: none; width: 100%; max-height: 200px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-color);">
+                <video id="issue-video" src="" controls style="display: none; width: 100%; max-height: 200px; border-radius: 12px; border: 1px solid var(--border-color);"></video>
+            </div>
             
             <p id="issue-desc" style="font-size: 0.9rem; line-height: 1.5; color: var(--text-main); margin-bottom: 0.5rem;">Description content goes here.</p>
             

@@ -127,11 +127,22 @@ function selectIssue(issue) {
 
     // Image/Video preview
     const imgEl = document.getElementById('issue-image');
+    const videoEl = document.getElementById('issue-video');
     if (issue.image_url) {
-        imgEl.src = issue.image_url;
-        imgEl.style.display = 'block';
+        const fileExt = issue.image_url.split('.').pop().toLowerCase();
+        const isVideo = ['mp4', 'mov', 'avi'].includes(fileExt);
+        if (isVideo) {
+            videoEl.src = issue.image_url;
+            videoEl.style.display = 'block';
+            imgEl.style.display = 'none';
+        } else {
+            imgEl.src = issue.image_url;
+            imgEl.style.display = 'block';
+            videoEl.style.display = 'none';
+        }
     } else {
         imgEl.style.display = 'none';
+        videoEl.style.display = 'none';
     }
 
     // Update vote buttons active state
