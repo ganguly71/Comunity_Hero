@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboard - Community Hero{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; text-align: center;">
+    <h1 style="font-family: var(--font-heading); font-size: 2.25rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Community Leaderboard</h1>
+    <p style="color: var(--text-muted); max-width: 600px; margin: 0.5rem auto 0 auto;">Citizens receive points for reporting verified issues (+15), upvoting active issues (+5), submitting helpful comments (+2), and logging resolutions (+25/50).</p>
+</div>
+
+<div style="max-width: 800px; margin: 0 auto; width: 100%;">
+    <div class="glass-card">
+        <div class="glass-card-header">
+            <h2>Top Community Members</h2>
+            <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);">
+                🏆 Top Citizens
+            </span>
+        </div>
+        
+        <div class="leaderboard-list">
+            {% for user in users %}
+                <div class="leaderboard-row">
+                    <div class="leaderboard-rank">
+                        #{{ loop.index }}
+                    </div>
+                    <div class="leaderboard-user">
+                        @{{ user.username }}
+                        {% if user.role == 'authority' %}
+                            <span class="badge" style="margin-left: 0.5rem; background: rgba(0, 242, 254, 0.15); color: var(--primary); border: 1px solid rgba(0, 242, 254, 0.3);">City Officer</span>
+                        {% endif %}
+                    </div>
+                    <div class="leaderboard-points">
+                        {{ user.points }} pts
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

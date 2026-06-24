@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Impact Dashboard - Community Hero{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-family: var(--font-heading); font-size: 2rem; font-weight: 800;">Impact Stats</h1>
+    <p style="color: var(--text-muted);">Real-time metrics demonstrating community problem-solving progress.</p>
+</div>
+
+<div class="stats-grid">
+    <div class="glass-card stat-card">
+        <h3>Total Reported</h3>
+        <div class="stat-num">{{ total_issues }}</div>
+    </div>
+    
+    <div class="glass-card stat-card">
+        <h3>Resolved</h3>
+        <div class="stat-num" style="color: var(--success);">{{ resolved_issues }}</div>
+    </div>
+    
+    <div class="glass-card stat-card">
+        <h3>Resolution Rate</h3>
+        <div class="stat-num" style="color: var(--secondary);">
+            {% if total_issues > 0 %}
+                {{ ((resolved_issues / total_issues) * 100)|round(1) }}%
+            {% else %}
+                0%
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="glass-card stat-card">
+        <h3>Active Work</h3>
+        <div class="stat-num" style="color: var(--warning);">{{ open_issues }}</div>
+    </div>
+</div>
+
+<div class="grid-container" style="grid-template-columns: 1fr;">
+    <div class="glass-card">
+        <div class="glass-card-header">
+            <h2>Issues by Category</h2>
+        </div>
+        
+        <div class="chart-container">
+            {% for category, count in cat_counts.items() %}
+                {% set percent = 0 %}
+                {% if total_issues > 0 %}
+                    {% set percent = (count / total_issues) * 100 %}
+                {% endif %}
+                <div class="chart-bar-group">
+                    <div class="chart-label">
+                        <span>{{ category }}</span>
+                        <strong>{{ count }} ({{ percent|round(1) }}%)</strong>
+                    </div>
+                    <div class="chart-bar-track">
+                        <div class="chart-bar-fill" style="width: {{ percent }}%;"></div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}My Dashboard - Community Hero{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-family: var(--font-heading); font-size: 2rem; font-weight: 800;">My Dashboard</h1>
+    <p style="color: var(--text-muted);">Manage your reported issues, post updates, and verify community resolutions.</p>
+</div>
+
+<div class="grid-container" style="grid-template-columns: 1fr;">
+    <div class="glass-card">
+        <div class="glass-card-header">
+            <h2>Your Reported Issues</h2>
+            <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main);">Total: {{ issues|length }}</span>
+        </div>
+        
+        {% if issues %}
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                {% for issue in issues %}
+                    <div class="issue-card">
+                        <div class="issue-card-content">
+                            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+                                <span class="badge status-{{ issue.status.lower().replace(' ', '-') }}">{{ issue.status }}</span>
+                                <span class="badge {{ issue.intensity.lower() }}">{{ issue.intensity }} Intensity</span>
+                                <span class="badge" style="background: rgba(255,255,255,0.05); color: var(--text-muted);">{{ issue.category }}</span>
+                            </div>
+                            <h3 style="font-size: 1.15rem; color: var(--text-main); font-family: var(--font-heading);">{{ issue.title }}</h3>
+                            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">{{ issue.description }}</p>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                Reported on: {{ issue.created_at.strftime('%Y-%m-%d %H:%M') }} | Location: {{ issue.latitude|round(4) }}, {{ issue.longitude|round(4) }}
+                            </div>
+                        </div>
+                        <div class="issue-card-actions">
+                            <button class="btn btn-secondary" onclick="openUpdateModal({{ issue.id }}, '{{ issue.title|escape }}', '{{ issue.status }}')" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                Add Update Log
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else: %}
+            <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <p>You haven't reported any issues yet.</p>
+                <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top: 1rem;">Go to Map & Report</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Update Status Log Modal -->
+<div id="update-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="update-modal-title">Log Issue Update</h3>
+            <button class="close-btn" onclick="closeUpdateModal()">&times;</button>
+        </div>
+        <form id="update-form" onsubmit="handleUpdateSubmit(event)">
+            <input type="hidden" id="update-issue-id" name="issue_id">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="update-status">Update Status</label>
+                    <select id="update-status" name="status" class="form-control">
+                        <option value="Open">Open</option>
+                        <option value="Under Review">Under Review</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved (Closes Issue)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="update-content">Description of progress / resolution</label>
+                    <textarea id="update-content" name="content" class="form-control" rows="4" placeholder="e.g. Workers are on site patching the asphalt. OR Verified that the streetlight bulb has been replaced and works perfectly." required></textarea>
+                </div>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">Resolving an issue grants bonus points to both the reporter (+50 pts) and you (+25 pts)!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeUpdateModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Update Log</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openUpdateModal(issueId, title, currentStatus) {
+        document.getElementById('update-issue-id').value = issueId;
+        document.getElementById('update-modal-title').innerText = 'Log Update for: ' + title;
+        document.getElementById('update-status').value = currentStatus;
+        document.getElementById('update-content').value = '';
+        document.getElementById('update-modal').classList.add('show');
+    }
+    
+    function closeUpdateModal() {
+        document.getElementById('update-modal').classList.remove('show');
+    }
+    
+    function handleUpdateSubmit(e) {
+        e.preventDefault();
+        const issueId = document.getElementById('update-issue-id').value;
+        const formData = new FormData(document.getElementById('update-form'));
+        
+        fetch(`/api/issues/${issueId}/update`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeUpdateModal();
+                window.location.reload();
+            } else {
+                alert(data.error || 'Failed to submit log update.');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error connecting to server.');
+        });
+    }
+</script>
+{% endblock %}

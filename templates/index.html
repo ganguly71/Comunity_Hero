@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Explore Local Issues - Community Hero{% endblock %}
+
+{% block content %}
+<div class="grid-container map-active-layout" style="height: 100%;">
+    <!-- Interactive Map Column -->
+    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+            <div>
+                <h1 style="font-family: var(--font-heading); font-size: 1.75rem; font-weight: 800;">Local Solver Map</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Click anywhere on the map to report a community problem, or click markers to explore issues.</p>
+            </div>
+            <button class="btn btn-primary" onclick="openReportModalWithDefault()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                Report New Issue
+            </button>
+        </div>
+        
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+    
+    <!-- Sidebar Details Column -->
+    <div class="issue-sidebar">
+        <!-- Default State: No Marker Clicked -->
+        <div id="sidebar-placeholder" class="glass-card" style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 1rem; color: var(--text-muted);">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <p>Select any marker on the map to inspect issue details, view votes, read comments, or add logs.</p>
+        </div>
+        
+        <!-- Active State: Marker Details Loaded -->
+        <div id="sidebar-details" class="glass-card detail-pane" style="display: none;">
+            <div class="glass-card-header" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem;">
+                <h2 id="issue-title">Issue Title</h2>
+                <button class="close-btn" onclick="deselectIssue()">&times;</button>
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                <span id="issue-category" class="badge">Roads</span>
+                <span id="issue-intensity" class="badge high">High Intensity</span>
+                <span id="issue-status" class="badge status-open">Open</span>
+            </div>
+            
+            <img id="issue-image" src="" alt="Issue Image" style="display: none;">
+            
+            <p id="issue-desc" style="font-size: 0.9rem; line-height: 1.5; color: var(--text-main); margin-bottom: 0.5rem;">Description content goes here.</p>
+            
+            <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.25rem;">
+                <div>Reported by: <strong id="issue-reporter">reporter</strong> (<span id="issue-reporter-points">0</span> pts)</div>
+                <div>Date: <span id="issue-date">2026-06-24</span></div>
+            </div>
+
+            <!-- Social Voting Bar -->
+            <div class="social-bar">
+                <button class="vote-btn upvote" onclick="castVote('upvote')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"></path></svg>
+                    <span>Upvote</span>
+                </button>
+                <strong id="issue-score" style="color: var(--text-main); font-size: 1rem;">0</strong>
+                <button class="vote-btn downvote" onclick="castVote('downvote')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"></path></svg>
+                    <span>Downvote</span>
+                </button>
+            </div>
+
+            <!-- Timeline logs -->
+            <h3 style="font-size: 1rem; font-family: var(--font-heading); margin-top: 0.5rem;">Status Logs</h3>
+            <div class="timeline" id="issue-timeline">
+                <!-- Timeline items injected dynamically -->
+            </div>
+
+            <!-- Comments Section -->
+            <h3 style="font-size: 1rem; font-family: var(--font-heading); margin-top: 0.5rem;">Community Comments</h3>
+            <div class="comments-section">
+                <div class="comment-input-group">
+                    <input type="text" id="new-comment-text" class="form-control" placeholder="Add a comment..." style="font-size: 0.85rem; padding: 0.5rem;">
+                    <button class="btn btn-primary" onclick="submitComment()" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Send</button>
+                </div>
+                <div class="comment-list" id="issue-comments">
+                    <!-- Comments injected dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Issue Modal -->
+<div id="report-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Report New Issue</h3>
+            <button class="close-btn" onclick="closeReportModal()">&times;</button>
+        </div>
+        <form id="report-form" enctype="multipart/form-data" onsubmit="handleReportSubmit(event)">
+            <div class="modal-body">
+                <div style="background: rgba(0, 242, 254, 0.05); border: 1px dashed var(--primary); padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.8rem; text-align: center; color: var(--primary);">
+                    🤖 AI Auto-Categorization Enabled. Just write your description!
+                </div>
+                
+                <div class="form-group">
+                    <label for="report-title">Issue Title</label>
+                    <input type="text" id="report-title" name="title" class="form-control" placeholder="e.g. Broken Water Pipe / Huge Pothole" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="report-desc">Detailed Description</label>
+                    <textarea id="report-desc" name="description" class="form-control" rows="3" placeholder="Describe the problem, size, potential hazards, etc." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="report-intensity">Intensity Level</label>
+                    <select id="report-intensity" name="intensity" class="form-control">
+                        <option value="Low">Low (Minor inconvenience)</option>
+                        <option value="Medium" selected>Medium (Moderate threat / needs attention)</option>
+                        <option value="High">High (Dangerous / emergency repair needed)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="report-image">Upload Photo/Video (Optional)</label>
+                    <input type="file" id="report-image" name="image" class="form-control" accept="image/*,video/*">
+                </div>
+                
+                <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem;">
+                    <div class="form-group">
+                        <label for="report-lat">Latitude</label>
+                        <input type="text" id="report-lat" name="latitude" class="form-control" readonly required>
+                    </div>
+                    <div class="form-group">
+                        <label for="report-lng">Longitude</label>
+                        <input type="text" id="report-lng" name="longitude" class="form-control" readonly required>
+                    </div>
+                </div>
+                <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">Click anywhere on the map to set custom coordinates.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeReportModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Report Issue (+15 Pts)</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}
