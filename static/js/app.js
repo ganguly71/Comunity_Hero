@@ -18,20 +18,44 @@ document.addEventListener('DOMContentLoaded', () => {
 // Initialize Leaflet Map
 function initMap() {
     // Create map instance with zoom constraints
-    map = L.map('map', { minZoom: 2, maxZoom: 18 }).setView([defaultLat, defaultLng], 15);
+    // Restrict map to India boundaries
+    const southWest = L.latLng(5.0, 65.0);
+    const northEast = L.latLng(38.0, 99.0);
+    const indiaBounds = L.latLngBounds(southWest, northEast);
 
-    // Esri World Imagery (Vibrant Satellite)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    // Base Maps
+    const osmMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19
-    }).addTo(map);
-    
-    // Transparent street labels overlay for hybrid satellite view
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 20
-    }).addTo(map);
+    });
+
+    const satelliteMap = L.layerGroup([
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            maxZoom: 19
+        }),
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        })
+    ]);
+
+    // Create map instance with zoom constraints and maxBounds
+    map = L.map('map', {
+        minZoom: 5,
+        maxZoom: 18,
+        maxBounds: indiaBounds,
+        maxBoundsViscosity: 1.0,
+        layers: [osmMap] // Default to Standard Map showing district/state/intl boundaries
+    }).setView([defaultLat, defaultLng], 12);
+
+    // Add layer switcher control
+    const baseMaps = {
+        "Standard Map (Boundaries)": osmMap,
+        "Satellite View (Hybrid)": satelliteMap
+    };
+    L.control.layers(baseMaps).addTo(map);
 
     // If role is manager or inspecting, geocode district center and center map
     if (userRole !== 'citizen' || inspecting) {
