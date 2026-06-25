@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://i.ibb.co/MDFM8W7B/logo.png" alt="Community Hero Logo" width="120px">
+  <img src="https://i.ibb.co/MDFM8W7B/logo.png" alt="Community Hero Logo" width="520px">
 </p>
 
 # 🇮🇳 Community Hero - Hyperlocal Civic Resolution Platform
