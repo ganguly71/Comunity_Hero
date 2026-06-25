@@ -43,7 +43,7 @@
         <form method="POST" id="login-form" onsubmit="handleAuthSubmit(event, 'Signing in...')">
             <div class="form-group">
                 <label for="username" style="color: var(--text-muted); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; display: block;">Username</label>
-                <input type="text" id="username" name="username" class="glass-input" placeholder="Enter your username" required>
+                <input type="text" id="username" name="username" class="glass-input" placeholder="Enter your username" value="{{ request.form.get('username', '') }}" required>
             </div>
             
             <div class="form-group" style="margin-bottom: 2.25rem;">

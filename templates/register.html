@@ -44,17 +44,17 @@
         <form method="POST" id="register-form" onsubmit="handleAuthSubmit(event, 'Creating Account...')">
             <div class="form-group">
                 <label for="username" style="color: var(--text-muted); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; display: block;">Username</label>
-                <input type="text" id="username" name="username" class="glass-input" placeholder="Choose a username" required>
+                <input type="text" id="username" name="username" class="glass-input" placeholder="Choose a username" value="{{ request.form.get('username', '') }}" required>
             </div>
             
             <div class="form-group">
                 <label for="email" style="color: var(--text-muted); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; display: block;">Email Address</label>
-                <input type="email" id="email" name="email" class="glass-input" placeholder="Enter your email" required>
+                <input type="email" id="email" name="email" class="glass-input" placeholder="Enter your email" value="{{ request.form.get('email', '') }}" required>
             </div>
             
             <div class="form-group">
                 <label for="address" style="color: var(--text-muted); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; display: block;">Home Address</label>
-                <textarea id="address" name="address" class="glass-input" placeholder="Enter your full home address (e.g. MG Road, Bengaluru, Karnataka)" rows="2" style="resize: none;" required></textarea>
+                <textarea id="address" name="address" class="glass-input" placeholder="Enter your full home address (e.g. MG Road, Bengaluru, Karnataka)" rows="2" style="resize: none;" required>{{ request.form.get('address', '') }}</textarea>
             </div>
             
             <div class="form-group">
