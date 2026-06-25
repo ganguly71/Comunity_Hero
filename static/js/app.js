@@ -278,6 +278,19 @@ function selectIssue(issue) {
         govtUpdateSec.style.display = 'none';
     }
 
+    // Contact reporter section display for managers
+    const contactReporterSec = document.getElementById('contact-reporter-section');
+    if (contactReporterSec) {
+        if ((userRole === 'district_manager' || userRole === 'state_manager' || userRole === 'admin') && !inspecting) {
+            contactReporterSec.style.display = 'block';
+            document.getElementById('contact-subject').value = '';
+            document.getElementById('contact-body').value = '';
+        } else {
+            contactReporterSec.style.display = 'none';
+        }
+    }
+
+
     // Citizen challenge section
     const challengeArea = document.getElementById('challenge-area');
     const challengeFormSec = document.getElementById('challenge-form-section');
@@ -534,6 +547,34 @@ function handleGovtUpdateSubmit(e) {
     })
     .catch(err => console.error(err));
 }
+
+function handleContactReporterSubmit(e) {
+    e.preventDefault();
+    if (!activeIssueId) return;
+    
+    const subject = document.getElementById('contact-subject').value;
+    const body = document.getElementById('contact-body').value;
+    
+    fetch(`/api/issues/${activeIssueId}/contact_reporter`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ subject: subject, body: body })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'Email sent successfully to reporter.');
+            document.getElementById('contact-subject').value = '';
+            document.getElementById('contact-body').value = '';
+        } else {
+            alert(data.error || 'Failed to contact reporter.');
+        }
+    })
+    .catch(err => console.error(err));
+}
+
 
 // Challenge form actions
 function openChallengeForm() {

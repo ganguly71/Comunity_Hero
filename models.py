@@ -95,3 +95,20 @@ class UpdateLog(db.Model):
     content = db.Column(db.Text, nullable=False)
     status_update = db.Column(db.String(20), nullable=True) # New status if changed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class SentMail(db.Model):
+    __tablename__ = 'sent_mails'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    issue_id = db.Column(db.Integer, db.ForeignKey('issues.id'), nullable=False)
+    subject = db.Column(db.String(200), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
+    receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')
+    issue = db.relationship('Issue', backref='contact_emails')
+

@@ -4,7 +4,7 @@ import requests
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
-from models import db, User, Issue, Comment, Vote, UpdateLog
+from models import db, User, Issue, Comment, Vote, UpdateLog, SentMail
 from datetime import datetime
 from dotenv import load_dotenv
 import google.generativeai as genai
@@ -107,6 +107,56 @@ def load_user(user_id):
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def send_brevo_email(to_email, to_name, subject, html_content, reply_to_email=None, reply_to_name=None):
+    api_key = os.environ.get("BREVO_API_KEY")
+    sender_email = os.environ.get("BREVO_SENDER_EMAIL", "notifications@community-hero.org")
+    sender_name = os.environ.get("BREVO_SENDER_NAME", "Community Hero")
+    
+    if not api_key or api_key == "xkeysib-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" or api_key.strip() == "":
+        print(f"[Brevo Email Bypass] API key is missing or dummy. Mock sending email to {to_email} with subject: {subject}")
+        return True
+        
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "accept": "application/json",
+        "api-key": api_key,
+        "content-type": "application/json"
+    }
+    
+    data = {
+        "sender": {
+            "name": sender_name,
+            "email": sender_email
+        },
+        "to": [
+            {
+                "email": to_email,
+                "name": to_name
+            }
+        ],
+        "subject": subject,
+        "htmlContent": html_content
+    }
+    
+    if reply_to_email:
+        data["replyTo"] = {
+            "email": reply_to_email,
+            "name": reply_to_name or reply_to_email
+        }
+        
+    try:
+        response = requests.post(url, json=data, headers=headers, timeout=10)
+        if response.status_code in [200, 201, 202]:
+            print(f"Brevo Email sent successfully to {to_email}. Status code: {response.status_code}")
+            return True
+        else:
+            print(f"Failed to send email to {to_email}. Status code: {response.status_code}, Response: {response.text}")
+            return False
+    except Exception as e:
+        print(f"Error sending email via Brevo: {e}")
+        return False
+
 
 def fallback_heuristic_categorize(title, description):
     """
@@ -940,6 +990,27 @@ def govt_update_issue(issue_id):
     db.session.add(log)
     db.session.commit()
     
+    # Send email notification to the reporter
+    reporter = issue.reporter
+    if reporter and reporter.email:
+        subject = f"Update on your reported issue: {issue.title}"
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                <h2 style="color: #00f2fe; margin-bottom: 20px;">Community Hero Update</h2>
+                <p>Hello <strong>{reporter.username}</strong>,</p>
+                <p>The status of your reported issue <strong>"{issue.title}"</strong> has been updated by the District Manager.</p>
+                <div style="background-color: #f9f9f9; border-left: 4px solid #00f2fe; padding: 15px; margin: 20px 0;">
+                    <p style="margin: 0 0 10px 0;"><strong>New Government Status:</strong> <span style="background-color: #e0f7fa; color: #006064; padding: 3px 8px; border-radius: 4px; font-weight: bold;">{govt_status}</span></p>
+                    <p style="margin: 0;"><strong>Manager Notes:</strong> {content}</p>
+                </div>
+                <p>Thank you for contributing to keeping your neighborhood clean and safe!</p>
+                <p style="font-size: 0.8em; color: #777; margin-top: 30px;">This is an automated notification from Community Hero. Please do not reply directly to this email.</p>
+            </body>
+        </html>
+        """
+        send_brevo_email(reporter.email, reporter.username, subject, html_content)
+
     return jsonify({'success': True})
 
 @app.route('/api/issues/<int:issue_id>/challenge', methods=['POST'])
@@ -979,6 +1050,212 @@ def challenge_issue(issue_id):
     db.session.commit()
     
     return jsonify({'success': True})
+
+@app.route('/api/issues/<int:issue_id>/contact_reporter', methods=['POST'])
+@login_required
+def contact_reporter(issue_id):
+    if current_user.role not in ['district_manager', 'state_manager', 'admin']:
+        return jsonify({'error': 'Unauthorized. Only managers/admins can contact reporters.'}), 403
+
+    issue = Issue.query.get_or_404(issue_id)
+
+    # If manager, check scope
+    if current_user.role == 'district_manager':
+        if issue.district != current_user.district or issue.state != current_user.state:
+            return jsonify({'error': 'You do not manage the district where this issue was reported.'}), 403
+    elif current_user.role == 'state_manager':
+        if issue.state != current_user.state:
+            return jsonify({'error': 'You do not manage the state where this issue was reported.'}), 403
+
+    subject = request.json.get('subject')
+    body = request.json.get('body')
+
+    if not subject or len(subject.strip()) == 0:
+        return jsonify({'error': 'Subject is required.'}), 400
+    if not body or len(body.strip()) == 0:
+        return jsonify({'error': 'Message body is required.'}), 400
+
+    reporter = issue.reporter
+    if not reporter or not reporter.email:
+        return jsonify({'error': 'Reporter email not found.'}), 404
+
+    # Build secure email HTML content for reporter
+    html_content = f"""
+    <html>
+        <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+            <h2 style="color: #00f2fe; margin-bottom: 20px;">Message from District Manager ({current_user.username})</h2>
+            <p>Hello <strong>{reporter.username}</strong>,</p>
+            <p>A manager has contacted you regarding your reported issue: <strong>"{issue.title}"</strong>.</p>
+            <div style="background-color: #f9f9f9; border-left: 4px solid #00f2fe; padding: 15px; margin: 20px 0; white-space: pre-wrap;">
+                <strong>Message:</strong><br/>
+                {body}
+            </div>
+            <p>You can reply directly to this email to contact the manager back.</p>
+            <p style="font-size: 0.8em; color: #777; margin-top: 30px;">Sent via Community Hero Secure Communications.</p>
+        </body>
+    </html>
+    """
+
+    # Send to reporter, setting the Reply-To to manager's email
+    sent_to_reporter = send_brevo_email(
+        to_email=reporter.email,
+        to_name=reporter.username,
+        subject=f"[Community Hero] Manager contact re: {issue.title} - {subject}",
+        html_content=html_content,
+        reply_to_email=current_user.email,
+        reply_to_name=current_user.username
+    )
+
+    if not sent_to_reporter:
+        return jsonify({'error': 'Failed to send email to reporter.'}), 500
+
+    # Build CC copy for manager
+    html_content_cc = f"""
+    <html>
+        <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+            <h2 style="color: #00f2fe; margin-bottom: 20px;">Sent Message Copy (Community Hero)</h2>
+            <p>This is a copy of the message you sent to reporter <strong>{reporter.username}</strong> regarding issue: <strong>"{issue.title}"</strong>.</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;"/>
+            <p><strong>Subject:</strong> {subject}</p>
+            <div style="background-color: #f9f9f9; border-left: 4px solid #ccc; padding: 15px; margin: 20px 0; white-space: pre-wrap;">
+                {body}
+            </div>
+            <p style="font-size: 0.8em; color: #777;">This email log is stored in the database and cannot be deleted by managers.</p>
+        </body>
+    </html>
+    """
+
+    # Send CC copy to manager
+    send_brevo_email(
+        to_email=current_user.email,
+        to_name=current_user.username,
+        subject=f"[Copy] Manager contact re: {issue.title} - {subject}",
+        html_content=html_content_cc
+    )
+
+    # Log to sent_mails table
+    log_record = SentMail(
+        sender_id=current_user.id,
+        receiver_id=reporter.id,
+        issue_id=issue.id,
+        subject=subject,
+        body=body
+    )
+    db.session.add(log_record)
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Message sent to reporter and copy CC\'d to your email.'})
+
+@app.route('/api/admin/sent-mails', methods=['GET', 'DELETE'])
+@login_required
+def admin_sent_mails():
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized. Admin only.'}), 403
+
+    if request.method == 'GET':
+        mails = SentMail.query.order_by(SentMail.sent_at.desc()).all()
+        output = []
+        for mail in mails:
+            output.append({
+                'id': mail.id,
+                'sender': mail.sender.username,
+                'sender_email': mail.sender.email,
+                'receiver': mail.receiver.username,
+                'receiver_email': mail.receiver.email,
+                'issue_title': mail.issue.title,
+                'issue_id': mail.issue_id,
+                'subject': mail.subject,
+                'body': mail.body,
+                'sent_at': mail.sent_at.strftime('%Y-%m-%d %H:%M')
+            })
+        return jsonify(output)
+
+    elif request.method == 'DELETE':
+        mail_id = request.json.get('mail_id')
+        if not mail_id:
+            return jsonify({'error': 'Missing mail_id.'}), 400
+        mail = SentMail.query.get_or_404(mail_id)
+        db.session.delete(mail)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Mail log deleted successfully.'})
+
+@app.route('/api/scheduler/check-reminders', methods=['POST', 'GET'])
+def check_reminders():
+    # Simple security token check
+    auth_token = request.headers.get('Authorization') or request.args.get('token')
+    expected_token = os.environ.get('SECRET_KEY')
+    if not auth_token or auth_token != expected_token:
+        return jsonify({'error': 'Unauthorized. Invalid or missing token.'}), 401
+
+    from datetime import datetime, timedelta
+    cutoff_date = datetime.utcnow() - timedelta(days=7)
+    
+    all_issues = Issue.query.filter(Issue.status != 'Resolved', Issue.govt_status != 'DONE').all()
+    
+    flagged_by_district = {}
+    
+    for issue in all_issues:
+        is_stale = issue.created_at < cutoff_date
+        is_popular = issue.vote_score >= 10
+        
+        if is_stale or is_popular:
+            key = (issue.state, issue.district)
+            if key not in flagged_by_district:
+                flagged_by_district[key] = []
+            flagged_by_district[key].append((issue, is_stale, is_popular))
+
+    emails_sent = 0
+    for (state, district), issues_list in flagged_by_district.items():
+        managers = User.query.filter_by(role='district_manager', state=state, district=district).all()
+        if not managers:
+            continue
+            
+        issues_html = ""
+        for issue, is_stale, is_popular in issues_list:
+            reasons = []
+            if is_stale:
+                reasons.append("Stale (>7 days unresolved)")
+            if is_popular:
+                reasons.append(f"High Vote Count (Score: {issue.vote_score})")
+            reason_str = ", ".join(reasons)
+            
+            issues_html += f"""
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 10px;"><strong>#{issue.id} - {issue.title}</strong><br/><span style="color: #777; font-size: 0.9em;">{issue.category}</span></td>
+                <td style="padding: 10px; color: #d32f2f; font-weight: bold;">{reason_str}</td>
+                <td style="padding: 10px;">{issue.created_at.strftime('%Y-%m-%d')}</td>
+            </tr>
+            """
+            
+        subject = f"[Reminder] High Priority Issues in {district}, {state}"
+        for manager in managers:
+            html_content = f"""
+            <html>
+                <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                    <h2 style="color: #e53935; margin-bottom: 20px;">High Priority Issue Digest</h2>
+                    <p>Hello Manager <strong>{manager.username}</strong>,</p>
+                    <p>The following issues in your district <strong>{district}, {state}</strong> require immediate attention:</p>
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <thead>
+                            <tr style="background-color: #f5f5f5; border-bottom: 2px solid #ccc; text-align: left;">
+                                <th style="padding: 10px;">Issue</th>
+                                <th style="padding: 10px;">Flag Reason</th>
+                                <th style="padding: 10px;">Reported Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {issues_html}
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 30px;">Please log in to the <a href="{os.environ.get('WEB_LINK_GCP', '#')}">Community Hero Dashboard</a> to update these issues.</p>
+                </body>
+            </html>
+            """
+            send_brevo_email(manager.email, manager.username, subject, html_content)
+            emails_sent += 1
+
+    return jsonify({'success': True, 'message': f'Reminder digest sent to {emails_sent} managers.'})
+
 
 @app.route('/api/managers/state', methods=['POST'])
 @login_required
@@ -1339,6 +1616,7 @@ if not os.environ.get('TESTING'):
         try:
             # Schema verification check
             User.query.filter(User.district == 'test').first()
+            SentMail.query.first()
         except Exception:
             db.session.rollback()
             db.drop_all()
