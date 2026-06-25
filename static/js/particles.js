@@ -169,33 +169,36 @@ window.initParticles = function(canvasId) {
             const sinA = Math.sin(angle);
             
             // Perpendicular vector for spoke width offsets
-            const cosPerp = Math.cos(angle + Math.PI / 2);
-            const sinPerp = Math.sin(angle + Math.PI / 2);
+            const cosPerp = -sinA;
+            const sinPerp = cosA;
 
-            // 1. Spindle Spoke base at the hub (wider)
-            const hx1 = 100 + 16 * cosA + 3.0 * cosPerp;
-            const hy1 = 100 + 16 * sinA + 3.0 * sinPerp;
-            const hx2 = 100 + 16 * cosA - 3.0 * cosPerp;
-            const hy2 = 100 + 16 * sinA - 3.0 * sinPerp;
+            // Spoke geometry calculations (Center at 100, 100)
+            // Inner connection at r=17.5 (width = 1.6px)
+            const rInner = 17.5;
+            const wInner = 0.8;
+            const hx1 = 100 + rInner * cosA + wInner * cosPerp;
+            const hy1 = 100 + rInner * sinA + wInner * sinPerp;
+            const hx2 = 100 + rInner * cosA - wInner * cosPerp;
+            const hy2 = 100 + rInner * sinA - wInner * sinPerp;
 
-            // 2. Spindle Spoke narrow midpoint
-            const mx1 = 100 + 50 * cosA + 1.2 * cosPerp;
-            const my1 = 100 + 50 * sinA + 1.2 * sinPerp;
-            const mx2 = 100 + 50 * cosA - 1.2 * cosPerp;
-            const my2 = 100 + 50 * sinA - 1.2 * sinPerp;
+            // Bulge at r=32 (width = 4.2px)
+            const rBulge = 32;
+            const wBulge = 2.1;
+            const bx1 = 100 + rBulge * cosA + wBulge * cosPerp;
+            const by1 = 100 + rBulge * sinA + wBulge * sinPerp;
+            const bx2 = 100 + rBulge * cosA - wBulge * cosPerp;
+            const by2 = 100 + rBulge * sinA - wBulge * sinPerp;
 
-            // 3. Spoke flaring at outer circle
-            const rx1 = 100 + 81 * cosA + 2.2 * cosPerp;
-            const ry1 = 100 + 81 * sinA + 2.2 * sinPerp;
-            const rx2 = 100 + 81 * cosA - 2.2 * cosPerp;
-            const ry2 = 100 + 81 * sinA - 2.2 * sinPerp;
+            // Outer tip at r=84 (width = 0.6px)
+            const rOuter = 84;
+            const wOuter = 0.3;
+            const tx1 = 100 + rOuter * cosA + wOuter * cosPerp;
+            const ty1 = 100 + rOuter * sinA + wOuter * sinPerp;
+            const tx2 = 100 + rOuter * cosA - wOuter * cosPerp;
+            const ty2 = 100 + rOuter * sinA - wOuter * sinPerp;
 
-            // 4. Triangular spoke tip on outer circle (radius 83)
-            const tx = 100 + 83 * cosA;
-            const ty = 100 + 83 * sinA;
-
-            // Accurate Spindle spoke SVG path
-            const pathData = `M ${hx1} ${hy1} Q ${mx1} ${my1}, ${rx1} ${ry1} L ${tx} ${ty} L ${rx2} ${ry2} Q ${mx2} ${my2}, ${hx2} ${hy2} Z`;
+            // Accurate Spindle spoke path using quadratic bezier curves
+            const pathData = `M ${hx1} ${hy1} Q ${bx1} ${by1}, ${tx1} ${ty1} L ${tx2} ${ty2} Q ${bx2} ${by2}, ${hx2} ${hy2} Z`;
 
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.setAttribute('class', 'dynamic-spoke');
@@ -203,16 +206,17 @@ window.initParticles = function(canvasId) {
             path.setAttribute('fill', '#000080'); // Navy blue
             svg.appendChild(path);
 
-            // Circular nodes (bumps) on outer rim between spokes
-            const dotAngle = angle + (Math.PI / 24);
-            const cx = 100 + 85.5 * Math.cos(dotAngle);
-            const cy = 100 + 85.5 * Math.sin(dotAngle);
+            // Semicircular scallop (arch) pointing inward
+            // Center is placed at the mid-angle between spokes, at r=84
+            const midAngle = angle + (Math.PI / 24);
+            const cx = 100 + 84 * Math.cos(midAngle);
+            const cy = 100 + 84 * Math.sin(midAngle);
 
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             circle.setAttribute('class', 'dynamic-spoke');
             circle.setAttribute('cx', cx);
             circle.setAttribute('cy', cy);
-            circle.setAttribute('r', '2.5'); // Slightly larger for better accuracy
+            circle.setAttribute('r', '6.0'); // Radius 6.0 creates a beautiful arch
             circle.setAttribute('fill', '#000080');
             svg.appendChild(circle);
         }
