@@ -849,12 +849,13 @@ def report_issue():
     except ValueError:
         return jsonify({'error': 'Invalid coordinates'}), 400
 
-    # Range Check: Must be within 10 km of address OR current GPS location
-    dist_to_address = haversine_distance(latitude, longitude, current_user.latitude, current_user.longitude)
-    dist_to_gps = haversine_distance(latitude, longitude, user_lat, user_lng) if (user_lat is not None) else float('inf')
-    
-    if dist_to_address > 10.0 and dist_to_gps > 10.0:
-        return jsonify({'error': 'Cannot report an issue located more than 10 KM away from your home address or current location.'}), 400
+    # Range Check: Must be within 10 km of current GPS location
+    if user_lat is None or user_lng is None:
+        return jsonify({'error': 'Current GPS location is required to verify the 10 KM reporting range.'}), 400
+        
+    dist_to_gps = haversine_distance(latitude, longitude, user_lat, user_lng)
+    if dist_to_gps > 10.0:
+        return jsonify({'error': 'Cannot report an issue located more than 10 KM away from your current location.'}), 400
 
     # Auto categorization using Gemini API (with local rule fallback)
     category = ai_categorize(title, description)
