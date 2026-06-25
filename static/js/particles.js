@@ -173,23 +173,46 @@ window.initParticles = function(canvasId) {
             const sinPerp = Math.sin(angle + Math.PI / 2);
 
             // 1. Spindle Spoke base at the hub (narrow connection)
-            const hx1 = 100 + 14 * cosA + 0.8 * cosPerp;
-            const hy1 = 100 + 14 * sinA + 0.8 * sinPerp;
-            const hx2 = 100 + 14 * cosA - 0.8 * cosPerp;
-            const hy2 = 100 + 14 * sinA - 0.8 * sinPerp;
+            const rHub = 14;
+            const rTip = 82;
+            const rDiamStart = 34;
+            const rDiamPeak = 47;
+            const rDiamEnd = 60;
+            
+            const wShaft = 0.75;
+            const wDiam = 2.75;
 
-            // 2. Spindle Spoke widest midpoint (diamond swell in the middle)
-            const mx1 = 100 + 44 * cosA + 3.2 * cosPerp;
-            const my1 = 100 + 44 * sinA + 3.2 * sinPerp;
-            const mx2 = 100 + 44 * cosA - 3.2 * cosPerp;
-            const my2 = 100 + 44 * sinA - 3.2 * sinPerp;
-
-            // 3. Spindle Spoke tapering to tip at outer circle
-            const tx = 100 + 82 * cosA;
-            const ty = 100 + 82 * sinA;
-
-            // Accurate Spindle spoke SVG path: Hub Base -> Mid Wide -> Tip -> Mid Wide -> Hub Base
-            const pathData = `M ${hx1} ${hy1} L ${mx1} ${my1} L ${tx} ${ty} L ${mx2} ${my2} L ${hx2} ${hy2} Z`;
+            const hx1 = 100 + rHub * cosA + wShaft * cosPerp;
+            const hy1 = 100 + rHub * sinA + wShaft * sinPerp;
+            
+            const dsx1 = 100 + rDiamStart * cosA + wShaft * cosPerp;
+            const dsy1 = 100 + rDiamStart * sinA + wShaft * sinPerp;
+            
+            const dpx1 = 100 + rDiamPeak * cosA + wDiam * cosPerp;
+            const dpy1 = 100 + rDiamPeak * sinA + wDiam * sinPerp;
+            
+            const dex1 = 100 + rDiamEnd * cosA + wShaft * cosPerp;
+            const dey1 = 100 + rDiamEnd * sinA + wShaft * sinPerp;
+            
+            const tx1 = 100 + rTip * cosA + wShaft * cosPerp;
+            const ty1 = 100 + rTip * sinA + wShaft * sinPerp;
+            
+            const tx2 = 100 + rTip * cosA - wShaft * cosPerp;
+            const ty2 = 100 + rTip * sinA - wShaft * sinPerp;
+            
+            const dex2 = 100 + rDiamEnd * cosA - wShaft * cosPerp;
+            const dey2 = 100 + rDiamEnd * sinA - wShaft * sinPerp;
+            
+            const dpx2 = 100 + rDiamPeak * cosA - wDiam * cosPerp;
+            const dpy2 = 100 + rDiamPeak * sinA - wDiam * sinPerp;
+            
+            const dsx2 = 100 + rDiamStart * cosA - wShaft * cosPerp;
+            const dsy2 = 100 + rDiamStart * sinA - wShaft * sinPerp;
+            
+            const hx2 = 100 + rHub * cosA - wShaft * cosPerp;
+            const hy2 = 100 + rHub * sinA - wShaft * sinPerp;
+            
+            const pathData = `M ${hx1} ${hy1} L ${dsx1} ${dsy1} L ${dpx1} ${dpy1} L ${dex1} ${dey1} L ${tx1} ${ty1} L ${tx2} ${ty2} L ${dex2} ${dey2} L ${dpx2} ${dpy2} L ${dsx2} ${dsy2} L ${hx2} ${hy2} Z`;
 
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.setAttribute('class', 'dynamic-spoke');
@@ -197,18 +220,16 @@ window.initParticles = function(canvasId) {
             path.setAttribute('fill', '#000080'); // Navy blue
             svg.appendChild(path);
 
-            // Circular nodes (bumps) on outer rim between spokes
-            const dotAngle = angle + (Math.PI / 24);
-            const cx = 100 + 82.5 * Math.cos(dotAngle);
-            const cy = 100 + 82.5 * Math.sin(dotAngle);
+            // Scallop arc pointing inwards between this spoke and the next
+            const nextAngle = ((i + 1) / 24) * 2 * Math.PI;
+            const x2 = 100 + 82 * Math.cos(nextAngle);
+            const y2 = 100 + 82 * Math.sin(nextAngle);
 
-            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('class', 'dynamic-spoke');
-            circle.setAttribute('cx', cx);
-            circle.setAttribute('cy', cy);
-            circle.setAttribute('r', '4.0'); // Semi-circular bump size
-            circle.setAttribute('fill', '#000080');
-            svg.appendChild(circle);
+            const scallop = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            scallop.setAttribute('class', 'dynamic-spoke');
+            scallop.setAttribute('d', `M ${tx1} ${ty1} A 6.2 6.2 0 0 0 ${x2} ${y2} Z`);
+            scallop.setAttribute('fill', '#000080');
+            svg.appendChild(scallop);
         }
     }
     
