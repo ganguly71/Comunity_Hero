@@ -118,13 +118,13 @@ window.initParticles = function(canvasId) {
 
     // Points Material (Glowy orbs with dynamic color multiplication and additive blending)
     const material = new THREE.PointsMaterial({
-        size: 9.5,
+        size: 7.0,
         map: createGlowTexture(),
         vertexColors: true,
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
-        opacity: 1.0
+        opacity: 0.75
     });
 
     const points = new THREE.Points(geometry, material);
