@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Community Hero - Fix Your City{% endblock %}
+
+{% block content %}
+<!-- Three.js Canvas -->
+<canvas id="particles-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; pointer-events: none;"></canvas>
+
+<!-- Ashok Chakra Overlay (Tiranga Glow Enabled) -->
+<div id="ashok-chakra-overlay" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(0deg); width: clamp(380px, 55vw, 520px); height: clamp(380px, 55vw, 520px); z-index: -1; pointer-events: none; opacity: 0.38; filter: drop-shadow(0 -12px 25px rgba(255, 119, 0, 0.65)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.45)) drop-shadow(0 12px 25px rgba(18, 153, 7, 0.65)); transition: opacity 0.5s ease;">
+    <svg id="chakra-svg" viewBox="0 0 200 200" width="100%" height="100%">
+        <circle cx="100" cy="100" r="90" fill="none" stroke="#000080" stroke-width="6" />
+        <circle cx="100" cy="100" r="82" fill="none" stroke="#000080" stroke-width="1.5" />
+        <circle cx="100" cy="100" r="16" fill="none" stroke="#000080" stroke-width="4" />
+        <circle cx="100" cy="100" r="6" fill="#000080" />
+    </svg>
+</div>
+
+<!-- Hero Section -->
+<section class="hero-section" style="min-height: 85vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2rem 1rem; position: relative;">
+    <div style="max-width: 800px; z-index: 10;">
+        <h1 class="hero-title animate-in" style="font-family: var(--font-heading); font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 800; line-height: 1.1; margin-bottom: 2rem; background: linear-gradient(135deg, #FF7700, #FFFFFF, #129907); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 30px rgba(255, 119, 0, 0.2));">
+            Fix Your City<br>Be the Hero<br>Build the Nation
+        </h1>
+        <!-- Subtitle wrapped in a highly blurred, transparent glass box for legibility -->
+        <p class="hero-subtitle animate-in" style="font-size: clamp(1rem, 2vw, 1.2rem); color: var(--text-main); max-width: 650px; margin: 0 auto 2.5rem auto; line-height: 1.6; animation-delay: 0.1s; background: rgba(4, 9, 20, 0.45); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); padding: 1.25rem 2rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);">
+            A hyperlocal, AI-powered civic platform designed to report issues, verify progress, and reward citizens for transforming their neighborhood.
+        </p>
+        <div class="cta-buttons animate-in" style="display: flex; gap: 1.25rem; justify-content: center; flex-wrap: wrap; animation-delay: 0.2s;">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('index') }}" class="glow-btn" style="padding: 1rem 2.5rem; font-size: 1.05rem; background: linear-gradient(135deg, #FF7700, #129907); box-shadow: 0 4px 20px rgba(255, 119, 0, 0.4);">Move to the Map</a>
+            {% else %}
+                <a href="{{ url_for('register') }}" class="glow-btn" style="padding: 0.9rem 2.25rem; font-size: 1.05rem;">Get Started</a>
+                <a href="{{ url_for('login') }}" class="glow-btn-outline" style="padding: 0.9rem 2.25rem; font-size: 1.05rem;">Sign In</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section" style="padding: 5rem 1rem; position: relative; z-index: 10;">
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <!-- Header text wrapped in a transparent high-blur box -->
+        <div style="text-align: center; max-width: 600px; margin: 0 auto 3.5rem auto; padding: 1.5rem 2.25rem; border-radius: 16px; background: rgba(4, 9, 20, 0.45); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);">
+            <h2 style="font-family: var(--font-heading); font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-main);">Platform Highlights</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">Empowering hyper-local civic management through direct action</p>
+        </div>
+        
+        <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+            <!-- Feature Card 1 -->
+            <div class="glass feature-card" style="padding: 2.5rem 2rem; display: flex; flex-direction: column; gap: 1.25rem; opacity: 0; transform: translateY(30px); transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);">
+                <div class="feature-icon" style="width: 50px; height: 50px; border-radius: 12px; background: rgba(255, 119, 0, 0.1); border: 1px solid rgba(255, 119, 0, 0.25); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                </div>
+                <h3 style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; color: var(--text-main);">Report Issues</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Click on the map and submit details. Gemini AI categorizes it automatically, routing it to the right district queue.</p>
+            </div>
+
+            <!-- Feature Card 2 -->
+            <div class="glass feature-card" style="padding: 2.5rem 2rem; display: flex; flex-direction: column; gap: 1.25rem; opacity: 0; transform: translateY(30px); transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); transition-delay: 0.15s;">
+                <div class="feature-icon" style="width: 50px; height: 50px; border-radius: 12px; background: rgba(0, 102, 255, 0.1); border: 1px solid rgba(0, 102, 255, 0.25); display: flex; align-items: center; justify-content: center; color: var(--accent);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+                <h3 style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; color: var(--text-main);">Track Progress</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Keep track of the official government logs. Get notified in real-time as district engineers resolve the problem.</p>
+            </div>
+
+            <!-- Feature Card 3 -->
+            <div class="glass feature-card" style="padding: 2.5rem 2rem; display: flex; flex-direction: column; gap: 1.25rem; opacity: 0; transform: translateY(30px); transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); transition-delay: 0.3s;">
+                <div class="feature-icon" style="width: 50px; height: 50px; border-radius: 12px; background: rgba(18, 153, 7, 0.1); border: 1px solid rgba(18, 153, 7, 0.25); display: flex; align-items: center; justify-content: center; color: var(--secondary);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </div>
+                <h3 style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; color: var(--text-main);">Earn Points</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Accumulate reputation points for reports, comments, upvotes, and successful resolutions to top the civic leaderboards.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="how-it-works-section" style="padding: 5rem 1rem; position: relative; z-index: 10;">
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <!-- Header text wrapped in a transparent high-blur box -->
+        <div style="text-align: center; max-width: 600px; margin: 0 auto 4rem auto; padding: 1.5rem 2.25rem; border-radius: 16px; background: rgba(4, 9, 20, 0.45); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);">
+            <h2 style="font-family: var(--font-heading); font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-main);">How It Works</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">Three simple steps to civic resolution</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; position: relative;">
+            <!-- Step 1 -->
+            <div class="glass step-card" style="padding: 3rem 2rem; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 1rem;">
+                <div class="giant-num" style="position: absolute; right: -10px; bottom: -20px; font-size: 8rem; font-weight: 900; font-family: var(--font-heading); color: rgba(255,255,255,0.03); line-height: 1; user-select: none;">01</div>
+                <h4 style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: var(--primary);">STEP 1</h4>
+                <h3 style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; color: var(--text-main);">Spot It</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0; z-index: 1;">Come across a pothole, broken streetlight, or illegal dump in your local area?</p>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="glass step-card" style="padding: 3rem 2rem; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 1rem;">
+                <div class="giant-num" style="position: absolute; right: -10px; bottom: -20px; font-size: 8rem; font-weight: 900; font-family: var(--font-heading); color: rgba(255,255,255,0.03); line-height: 1; user-select: none;">02</div>
+                <h4 style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: var(--accent);">STEP 2</h4>
+                <h3 style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; color: var(--text-main);">Report It</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0; z-index: 1;">Click on the Interactive Satellite Map, describe the issue, and optionally upload a photo or video.</p>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="glass step-card" style="padding: 3rem 2rem; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 1rem;">
+                <div class="giant-num" style="position: absolute; right: -10px; bottom: -20px; font-size: 8rem; font-weight: 900; font-family: var(--font-heading); color: rgba(255,255,255,0.03); line-height: 1; user-select: none;">03</div>
+                <h4 style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: var(--secondary);">STEP 3</h4>
+                <h3 style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; color: var(--text-main);">Watch It Get Fixed</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0; z-index: 1;">District Managers assign cleanup teams. You have 90 days to challenge and veto the fix if it's incomplete!</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section" style="padding: 5rem 1rem; position: relative; z-index: 10;">
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <div class="glass" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 3rem; padding: 4rem 2rem; text-align: center;">
+            <div class="stat-counter">
+                <div class="stat-value" id="count-resolved" data-target="0" style="font-family: var(--font-heading); font-size: 3rem; font-weight: 800; background: linear-gradient(135deg, #FF7700, #129907); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;">0</div>
+                <div style="color: var(--text-muted); font-size: 0.95rem; font-weight: 600;">Issues Resolved</div>
+            </div>
+            
+            <div class="stat-counter">
+                <div class="stat-value" id="count-citizens" data-target="0" style="font-family: var(--font-heading); font-size: 3rem; font-weight: 800; background: linear-gradient(135deg, #FF7700, #129907); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;">0</div>
+                <div style="color: var(--text-muted); font-size: 0.95rem; font-weight: 600;">Active Citizens</div>
+            </div>
+
+            <div class="stat-counter">
+                <div class="stat-value" id="count-districts" data-target="0" style="font-family: var(--font-heading); font-size: 3rem; font-weight: 800; background: linear-gradient(135deg, #FF7700, #129907); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;">0</div>
+                <div style="color: var(--text-muted); font-size: 0.95rem; font-weight: 600;">Districts Covered</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer Section -->
+<footer style="background: rgba(4, 9, 20, 0.85); border-top: 1px solid var(--border-color); padding: 3rem 1rem; position: relative; z-index: 10; backdrop-filter: blur(36px); -webkit-backdrop-filter: blur(36px);">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; text-align: center;">
+        <a href="/" style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800; background: linear-gradient(90deg, #FF7700, #FFFFFF, #129907); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none;">
+            Community Hero
+        </a>
+        <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 400px; line-height: 1.5;">Hyperlocal tracking mechanism resolving public grievances instantly through direct and transparent community channels.</p>
+        <div style="display: flex; gap: 2rem;">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('index') }}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: var(--transition-smooth);" onmouseover="this.style.color='#FF7700'" onmouseout="this.style.color='var(--text-muted)'">Explore Map</a>
+                <a href="{{ url_for('logout') }}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: var(--transition-smooth);" onmouseover="this.style.color='#129907'" onmouseout="this.style.color='var(--text-muted)'">Sign Out</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: var(--transition-smooth);" onmouseover="this.style.color='#FF7700'" onmouseout="this.style.color='var(--text-muted)'">Sign In</a>
+                <a href="{{ url_for('register') }}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: var(--transition-smooth);" onmouseover="this.style.color='#129907'" onmouseout="this.style.color='var(--text-muted)'">Sign Up</a>
+            {% endif %}
+        </div>
+        <p style="color: rgba(255,255,255,0.15); font-size: 0.75rem; margin-top: 1rem;">&copy; 2026 Community Hero. All rights reserved.</p>
+    </div>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<!-- Three.js Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- Reusable Particles Script -->
+<script src="{{ url_for('static', filename='js/particles.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize waving flag grid background
+        if (window.initParticles) {
+            window.initParticles('particles-canvas');
+        }
+
+        // Features reveal on scroll
+        const features = document.querySelectorAll('.feature-card');
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const featuresObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        features.forEach(f => featuresObserver.observe(f));
+
+        // Stats counter count-up implementation
+        const countUp = (element, target) => {
+            let start = 0;
+            const duration = 1200; // ms
+            const startTime = performance.now();
+
+            const update = (now) => {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Ease out cubic
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                const current = Math.floor(easeProgress * target);
+                
+                element.innerText = current;
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    element.innerText = target;
+                }
+            };
+
+            requestAnimationFrame(update);
+        };
+
+        // Fetch stats live
+        fetch('/api/stats')
+            .then(res => res.json())
+            .then(data => {
+                const resolvedEl = document.getElementById('count-resolved');
+                const citizensEl = document.getElementById('count-citizens');
+                const districtsEl = document.getElementById('count-districts');
+
+                resolvedEl.setAttribute('data-target', data.resolved);
+                citizensEl.setAttribute('data-target', data.citizens);
+                districtsEl.setAttribute('data-target', data.districts);
+
+                // Observe stats section to trigger counters
+                const statsSection = document.querySelector('.stats-section');
+                const statsObserver = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            countUp(resolvedEl, data.resolved);
+                            countUp(citizensEl, data.citizens);
+                            countUp(districtsEl, data.districts);
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.1 });
+
+                statsObserver.observe(statsSection);
+            })
+            .catch(err => {
+                console.error("Failed to load statistics:", err);
+                // Fallbacks
+                document.getElementById('count-resolved').innerText = "14";
+                document.getElementById('count-citizens').innerText = "4";
+                document.getElementById('count-districts').innerText = "3";
+            });
+    });
+</script>
+{% endblock %}

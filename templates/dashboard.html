@@ -28,34 +28,34 @@
 
 {% if current_user.role == 'admin' and not inspecting_state %}
     <!-- ==================== ADMIN VIEW ==================== -->
-    <div class="grid-container" style="grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    <div class="grid-container stagger-children" style="grid-template-columns: 2fr 1fr; gap: 1.5rem;">
         
         <!-- States Metrics and Management -->
-        <div class="glass-card">
+        <div class="glass-card animate-in">
             <div class="glass-card-header">
                 <h2>State Jurisdictions</h2>
-                <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main);">States: {{ states_data|length }}</span>
+                <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main);">States: <span class="counter-val" data-target="{{ states_data|length }}">0</span></span>
             </div>
             
             {% if states_data %}
-                <div style="display: flex; flex-direction: column; gap: 1.25rem; margin-top: 1rem;">
+                <div class="stagger-children" style="display: flex; flex-direction: column; gap: 1.25rem; margin-top: 1rem;">
                     {% for st in states_data %}
-                        <div class="issue-card" style="padding: 1.25rem; border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div class="issue-card hover-row animate-in" style="padding: 1.25rem; border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                             <div>
                                 <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-main); margin-bottom: 0.25rem;">{{ st.state }}</h3>
                                 <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 1rem; flex-wrap: wrap;">
-                                    <span>Districts with Issues: <strong>{{ st.districts_count }}</strong></span>
-                                    <span>Total Issues: <strong>{{ st.total_issues }}</strong></span>
-                                    <span>State Managers: <strong>{{ st.managers_count }}</strong></span>
+                                    <span>Districts with Issues: <strong class="counter-val" data-target="{{ st.districts_count }}">0</strong></span>
+                                    <span>Total Issues: <strong class="counter-val" data-target="{{ st.total_issues }}">0</strong></span>
+                                    <span>State Managers: <strong class="counter-val" data-target="{{ st.managers_count }}">0</strong></span>
                                 </div>
                             </div>
                             
                             <div style="display: flex; align-items: center; gap: 1.5rem;">
                                 <div style="text-align: right;">
                                     <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.15rem;">Govt. Resolution Rate</span>
-                                    <span style="font-size: 1.15rem; font-weight: 700; color: var(--primary);">{{ st.completion_rate }}%</span>
+                                    <span style="font-size: 1.15rem; font-weight: 700; color: var(--primary);"><span class="counter-val" data-target="{{ st.completion_rate }}" data-percent="true">0%</span></span>
                                 </div>
-                                <a href="{{ url_for('inspect_state', state=st.state) }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Inspect State</a>
+                                <a href="{{ url_for('inspect_state', state=st.state) }}" class="glow-btn-outline" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">Inspect State</a>
                             </div>
                         </div>
                     {% endfor %}
@@ -66,7 +66,7 @@
         </div>
         
         <!-- Add State Manager Card -->
-        <div class="glass-card" style="height: fit-content;">
+        <div class="glass-card manager-card animate-in" style="height: fit-content;">
             <div class="glass-card-header">
                 <h2>Add State Manager</h2>
             </div>
@@ -74,22 +74,22 @@
             <form action="{{ url_for('create_state_manager') }}" method="POST" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
                 <div class="form-group">
                     <label for="username">Manager Username</label>
-                    <input type="text" id="username" name="username" class="form-control" placeholder="e.g. state_mgr_karnataka" required>
+                    <input type="text" id="username" name="username" class="glass-input" placeholder="e.g. state_mgr_karnataka" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="e.g. karnataka@govt.in" required>
+                    <input type="email" id="email" name="email" class="glass-input" placeholder="e.g. karnataka@govt.in" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="password">Login Password</label>
-                    <input type="password" id="password" name="password" class="form-control" placeholder="Create temporary password" required>
+                    <input type="password" id="password" name="password" class="glass-input" placeholder="Create temporary password" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="state">Assigned State</label>
-                    <select id="state" name="state" class="form-control" required>
+                    <select id="state" name="state" class="glass-input" style="background-color: rgba(10, 14, 23, 0.95);" required>
                         <option value="" disabled selected>Select a State</option>
                         <option value="Andhra Pradesh">Andhra Pradesh</option>
                         <option value="Arunachal Pradesh">Arunachal Pradesh</option>
@@ -130,41 +130,41 @@
                     </select>
                 </div>
                 
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 600; margin-top: 0.5rem;">Register Manager Account</button>
+                <button type="submit" class="glow-btn" style="width: 100%; padding: 0.75rem; font-weight: 600; margin-top: 0.5rem;">Register Manager Account</button>
             </form>
         </div>
     </div>
 
 {% elif inspecting_state or current_user.role == 'state_manager' %}
     <!-- ==================== STATE MANAGER VIEW ==================== -->
-    <div class="grid-container" style="grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    <div class="grid-container stagger-children" style="grid-template-columns: 2fr 1fr; gap: 1.5rem;">
         
         <!-- District Standings / Charts -->
-        <div class="glass-card">
+        <div class="glass-card animate-in">
             <div class="glass-card-header">
                 <h2>District Operations in {{ state }}</h2>
-                <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main);">Districts: {{ districts_data|length }}</span>
+                <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main);">Districts: <span class="counter-val" data-target="{{ districts_data|length }}">0</span></span>
             </div>
             
             {% if districts_data %}
-                <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1rem;">
+                <div class="stagger-children" style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1rem;">
                     {% for dist in districts_data %}
-                        <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem;">
+                        <div class="hover-row animate-in" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                                 <div>
                                     <h3 style="font-family: var(--font-heading); font-size: 1.15rem; color: var(--text-main);">{{ dist.district }}</h3>
-                                    <span style="font-size: 0.8rem; color: var(--text-muted);">Total Issues: <strong>{{ dist.total_issues }}</strong></span>
+                                    <span style="font-size: 0.8rem; color: var(--text-muted);">Total Issues: <strong class="counter-val" data-target="{{ dist.total_issues }}">0</strong></span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 1rem;">
                                     <div style="text-align: right;">
-                                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary);">{{ dist.completion_rate }}% Resolved</span>
+                                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary);"><span class="counter-val" data-target="{{ dist.completion_rate }}" data-percent="true">0%</span> Resolved</span>
                                     </div>
-                                    <a href="{{ url_for('inspect_district', district=dist.district, state=state) }}" class="btn btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem;">Inspect District Map</a>
+                                    <a href="{{ url_for('inspect_district', district=dist.district, state=state) }}" class="glow-btn-outline" style="padding: 0.4rem 0.85rem; font-size: 0.8rem;">Inspect District Map</a>
                                 </div>
                             </div>
                             <!-- Styled custom progress bar -->
                             <div style="height: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; overflow: hidden;">
-                                <div style="height: 100%; width: {{ dist.completion_rate }}%; background: linear-gradient(90deg, var(--secondary), var(--primary)); border-radius: 4px; box-shadow: 0 0 10px var(--primary-glow);"></div>
+                                <div class="progress-bar-fill" data-width="{{ dist.completion_rate }}" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--secondary), var(--primary)); border-radius: 4px; box-shadow: 0 0 10px var(--primary-glow); transition: width 1s ease-out;"></div>
                             </div>
                         </div>
                     {% endfor %}
@@ -175,7 +175,7 @@
         </div>
         
         <!-- Add District Manager Card -->
-        <div class="glass-card" style="height: fit-content;">
+        <div class="glass-card manager-card animate-in" style="height: fit-content;">
             <div class="glass-card-header">
                 <h2>Add District Manager</h2>
             </div>
@@ -183,44 +183,44 @@
             <form action="{{ url_for('create_district_manager') }}" method="POST" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
                 <div class="form-group">
                     <label for="username">Manager Username</label>
-                    <input type="text" id="username" name="username" class="form-control" placeholder="e.g. dist_mgr_blr" required>
+                    <input type="text" id="username" name="username" class="glass-input" placeholder="e.g. dist_mgr_blr" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="e.g. bangalore.mgr@govt.in" required>
+                    <input type="email" id="email" name="email" class="glass-input" placeholder="e.g. bangalore.mgr@govt.in" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="password">Login Password</label>
-                    <input type="password" id="password" name="password" class="form-control" placeholder="Create temporary password" required>
+                    <input type="password" id="password" name="password" class="glass-input" placeholder="Create temporary password" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="district">Assigned District</label>
-                    <select id="district-select" name="district" class="form-control" required>
+                    <select id="district-select" name="district" class="glass-input" style="background-color: rgba(10, 14, 23, 0.95);" required>
                         <option value="" disabled selected>Select a District</option>
                     </select>
                 </div>
                 
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 600; margin-top: 0.5rem;">Register District Manager</button>
+                <button type="submit" class="glow-btn" style="width: 100%; padding: 0.75rem; font-weight: 600; margin-top: 0.5rem;">Register District Manager</button>
             </form>
         </div>
     </div>
 
 {% else %}
     <!-- ==================== CITIZEN VIEW ==================== -->
-    <div class="grid-container" style="grid-template-columns: 1fr;">
-        <div class="glass-card">
+    <div class="grid-container stagger-children" style="grid-template-columns: 1fr;">
+        <div class="glass-card animate-in">
             <div class="glass-card-header">
                 <h2>Your Reported Issues</h2>
-                <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main);">Total: {{ issues|length }}</span>
+                <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main);">Total: <span class="counter-val" data-target="{{ issues|length }}">0</span></span>
             </div>
             
             {% if issues %}
-                <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+                <div class="stagger-children" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
                     {% for issue in issues %}
-                        <div class="issue-card">
+                        <div class="issue-card hover-row animate-in">
                             <div class="issue-card-content">
                                 <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
                                     <span class="badge status-{{ issue.status.lower().replace(' ', '-') }}">{{ issue.status }}</span>
@@ -237,7 +237,7 @@
                                 </div>
                             </div>
                             <div class="issue-card-actions">
-                                <a href="{{ url_for('index') }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; gap: 0.25rem;">
+                                <a href="{{ url_for('index') }}" class="glow-btn-outline" style="padding: 0.5rem 1rem; font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; gap: 0.25rem;">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                     View on Map
                                 </a>
@@ -249,7 +249,7 @@
                 <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     <p>You haven't reported any issues yet.</p>
-                    <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top: 1rem;">Go to Map & Report</a>
+                    <a href="{{ url_for('index') }}" class="glow-btn" style="margin-top: 1rem;">Go to Map & Report</a>
                 </div>
             {% endif %}
     </div>
@@ -309,6 +309,53 @@
                 opt.textContent = dist;
                 districtSelect.appendChild(opt);
             });
+        }
+
+        // Count up animations
+        const counters = document.querySelectorAll('.counter-val');
+        counters.forEach(el => {
+            const target = parseFloat(el.getAttribute('data-target')) || 0;
+            const isPercent = el.getAttribute('data-percent') === 'true';
+            const duration = 1200; // ms
+            const startTime = performance.now();
+
+            const update = (now) => {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                const current = (easeProgress * target);
+                
+                if (isPercent) {
+                    el.innerText = current.toFixed(1) + '%';
+                } else {
+                    el.innerText = Math.floor(current);
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    el.innerText = target + (isPercent ? '%' : '');
+                }
+            };
+            requestAnimationFrame(update);
+        });
+
+        // Trigger progress bars
+        setTimeout(() => {
+            document.querySelectorAll('.progress-bar-fill').forEach(bar => {
+                const w = bar.getAttribute('data-width');
+                bar.style.width = w + '%';
+            });
+        }, 100);
+
+        // Flash manager success border if success notification appears
+        const hasFlashMessage = document.querySelector('.flash-message.success');
+        if (hasFlashMessage) {
+            const card = document.querySelector('.manager-card');
+            if (card) {
+                card.classList.add('form-success-flash');
+                setTimeout(() => card.classList.remove('form-success-flash'), 1800);
+            }
         }
     });
 </script>

@@ -39,20 +39,38 @@
             {% endif %}
         </div>
         
-        <div class="map-container" style="position: relative;">
+        <div class="map-container" style="position: relative; border-radius: 16px; overflow: hidden; border: 1px solid rgba(0,242,254,0.15); box-shadow: 0 0 25px rgba(0,242,254,0.05);">
             <div id="map"></div>
-            <!-- Glassmorphic Location Search and Control Bar -->
-            <div id="map-search-bar" style="position: absolute; top: 12px; left: 60px; z-index: 1000; display: flex; flex-direction: column; gap: 0.5rem; background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 0.75rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: var(--glass-shadow); max-width: 350px; width: calc(100% - 80px);">
-                <div style="display: flex; gap: 0.4rem;">
-                    <input type="text" id="search-input" class="form-control" placeholder="Search city or area..." style="padding: 0.4rem 0.8rem; font-size: 0.85rem; height: auto;" onkeydown="if(event.key === 'Enter') searchLocation()">
-                    <button type="button" class="btn btn-primary" onclick="searchLocation()" style="padding: 0.4rem 0.85rem; font-size: 0.85rem;">Go</button>
-                    <button type="button" class="btn btn-secondary" onclick="locateUser()" title="Locate Me" style="padding: 0.4rem 0.6rem; display: flex; align-items: center; justify-content: center;">
+            <!-- Subtle inner border glow overlay -->
+            <div style="position: absolute; inset: 0; box-shadow: inset 0 0 40px rgba(0,242,254,0.15); pointer-events: none; z-index: 999; border-radius: 16px;"></div>
+            
+            <!-- Glassmorphic Location Search and Control Bar (Pill style) -->
+            <div id="map-search-bar" style="position: absolute; top: 16px; left: 60px; z-index: 1000; display: flex; flex-direction: column; gap: 0.5rem; background: rgba(10, 14, 23, 0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 0.6rem 1.25rem; border-radius: 30px; border: 1px solid rgba(0,242,254,0.25); box-shadow: 0 8px 32px 0 rgba(0,0,0,0.5); max-width: 380px; width: calc(100% - 80px);">
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="text" id="search-input" class="glass-input" placeholder="Search city or area..." style="padding: 0.45rem 1.25rem; font-size: 0.85rem; height: 36px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3);" onkeydown="if(event.key === 'Enter') searchLocation()">
+                    <button type="button" class="glow-btn" onclick="searchLocation()" style="padding: 0.45rem 1.25rem; font-size: 0.85rem; height: 36px; border-radius: 20px; box-shadow: none;">Go</button>
+                    <button type="button" class="btn btn-secondary" onclick="locateUser()" title="Locate Me" style="padding: 0; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path></svg>
                     </button>
                 </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem; padding-left: 0.25rem;">
+                
+                <!-- Dropdown suggestions box -->
+                <div id="search-suggestions" style="display: none; background: rgba(10, 14, 23, 0.95); border: 1px solid rgba(255, 119, 0, 0.35); border-radius: 12px; max-height: 180px; overflow-y: auto; box-shadow: var(--glass-shadow); padding: 0.25rem 0; width: 100%; box-sizing: border-box; z-index: 1010;"></div>
+
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding-left: 0.5rem;">
                     <input type="checkbox" id="toggle-resolved" onchange="renderMarkers()" style="cursor: pointer; width: 14px; height: 14px; accent-color: var(--primary);">
                     <label for="toggle-resolved" style="font-size: 0.75rem; color: var(--text-muted); cursor: pointer; user-select: none; font-weight: 600;">Show Completed (DONE) Issues</label>
+                </div>
+            </div>
+
+            <!-- Glassmorphic Location HUD (Bottom Left) -->
+            <div id="map-status-hud" style="position: absolute; bottom: 16px; left: 16px; z-index: 1000; background: rgba(10, 14, 23, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 0.6rem 1.25rem; border-radius: 20px; border: 1px solid rgba(255, 119, 0, 0.3); box-shadow: 0 8px 32px 0 rgba(0,0,0,0.5); max-width: 320px; font-family: var(--font-body); pointer-events: none; transition: all 0.3s ease-out; opacity: 0; transform: translateY(10px);">
+                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-main);">
+                    <span style="font-size: 1.1rem; filter: drop-shadow(0 0 5px var(--primary));">📍</span>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--primary); font-weight: 700;">Viewing Area</span>
+                        <span id="hud-address-text" style="font-weight: 600; font-size: 0.8rem; line-height: 1.3;">Detecting view...</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -105,7 +123,7 @@
         </div>
         
         <!-- Active State: Marker Details Loaded -->
-        <div id="sidebar-details" class="glass-card detail-pane" style="display: none; padding: 1.25rem;">
+        <div id="sidebar-details" class="glass-card detail-pane sidebar-animate" style="display: none; padding: 1.25rem;">
             <div class="glass-card-header" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem;">
                 <h2 id="issue-title" style="font-size: 1.25rem;">Issue Title</h2>
                 <button class="close-btn" onclick="deselectIssue()">&times;</button>
@@ -186,12 +204,12 @@
 
             <!-- Social Voting Bar (Citizen only) -->
             <div class="social-bar" id="citizen-social-bar">
-                <button class="vote-btn upvote" onclick="castVote('upvote')">
+                <button class="vote-btn upvote" onclick="this.classList.add('voted'); setTimeout(() => this.classList.remove('voted'), 400); castVote('upvote')">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"></path></svg>
                     <span>Upvote</span>
                 </button>
                 <strong id="issue-score" style="color: var(--text-main); font-size: 1rem;">0</strong>
-                <button class="vote-btn downvote" onclick="castVote('downvote')">
+                <button class="vote-btn downvote" onclick="this.classList.add('voted'); setTimeout(() => this.classList.remove('voted'), 400); castVote('downvote')">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"></path></svg>
                     <span>Downvote</span>
                 </button>
@@ -220,9 +238,9 @@
 
 <!-- Report Issue Modal -->
 <div id="report-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 class="modal-title">Report New Issue</h3>
+    <div class="modal-content" style="background: rgba(10, 14, 23, 0.95); border: 1px solid rgba(0,242,254,0.25); border-radius: 20px;">
+        <div class="modal-header" style="background: rgba(18,26,43,0.8); border-bottom: 1px solid var(--border-color);">
+            <h3 class="modal-title" style="font-family: var(--font-heading); font-weight: 700; color: var(--text-main);">Report New Issue</h3>
             <button class="close-btn" onclick="closeReportModal()">&times;</button>
         </div>
         <form id="report-form" enctype="multipart/form-data" onsubmit="handleReportSubmit(event)">
@@ -232,18 +250,18 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="report-title">Issue Title</label>
-                    <input type="text" id="report-title" name="title" class="form-control" placeholder="e.g. Broken Water Pipe / Huge Pothole" required>
+                    <label for="report-title" style="color: var(--text-muted); font-weight: 600;">Issue Title</label>
+                    <input type="text" id="report-title" name="title" class="glass-input" placeholder="e.g. Broken Water Pipe / Huge Pothole" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="report-desc">Detailed Description</label>
-                    <textarea id="report-desc" name="description" class="form-control" rows="3" placeholder="Describe the problem, size, potential hazards, etc." required></textarea>
+                    <label for="report-desc" style="color: var(--text-muted); font-weight: 600;">Detailed Description</label>
+                    <textarea id="report-desc" name="description" class="glass-input" rows="3" placeholder="Describe the problem, size, potential hazards, etc." required></textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label for="report-intensity">Intensity Level</label>
-                    <select id="report-intensity" name="intensity" class="form-control">
+                    <label for="report-intensity" style="color: var(--text-muted); font-weight: 600;">Intensity Level</label>
+                    <select id="report-intensity" name="intensity" class="glass-input" style="background-color: rgba(10, 14, 23, 0.95);">
                         <option value="Low">Low (Minor inconvenience)</option>
                         <option value="Medium" selected>Medium (Moderate threat / needs attention)</option>
                         <option value="High">High (Dangerous / emergency repair needed)</option>
@@ -251,25 +269,28 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="report-image">Upload Photo/Video (Optional - Multiple allowed)</label>
-                    <input type="file" id="report-image" name="image" class="form-control" accept="image/*,video/*" multiple>
+                    <label for="report-image" style="color: var(--text-muted); font-weight: 600;">Upload Photo/Video (Optional - Multiple allowed)</label>
+                    <input type="file" id="report-image" name="image" class="glass-input" accept="image/*,video/*" multiple>
                 </div>
                 
-                <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem;">
+                <div id="report-location-hint" style="margin-top: 1rem; padding: 0.6rem 0.9rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; font-size: 0.8rem;">
+                    📍 Location will be set when you open this form
+                </div>
+                <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem;">
                     <div class="form-group">
-                        <label for="report-lat">Latitude</label>
-                        <input type="text" id="report-lat" name="latitude" class="form-control" readonly required>
+                        <label for="report-lat" style="color: var(--text-muted); font-weight: 600;">Latitude</label>
+                        <input type="text" id="report-lat" name="latitude" class="glass-input" style="background: rgba(255,255,255,0.03); color: var(--text-muted);" readonly required>
                     </div>
                     <div class="form-group">
-                        <label for="report-lng">Longitude</label>
-                        <input type="text" id="report-lng" name="longitude" class="form-control" readonly required>
+                        <label for="report-lng" style="color: var(--text-muted); font-weight: 600;">Longitude</label>
+                        <input type="text" id="report-lng" name="longitude" class="glass-input" style="background: rgba(255,255,255,0.03); color: var(--text-muted);" readonly required>
                     </div>
                 </div>
-                <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">Click anywhere on the map to set custom coordinates.</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 0.4rem;">Or tap anywhere on the map to set a custom pin location.</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeReportModal()">Cancel</button>
-                <button type="submit" class="btn btn-primary">Report Issue (+15 Pts)</button>
+            <div class="modal-footer" style="background: rgba(18,26,43,0.8); border-top: 1px solid var(--border-color);">
+                <button type="button" class="glow-btn-outline" style="padding: 0.6rem 1.25rem;" onclick="closeReportModal()">Cancel</button>
+                <button type="submit" class="glow-btn" style="padding: 0.6rem 1.25rem;">Report Issue (+15 Pts)</button>
             </div>
         </form>
     </div>

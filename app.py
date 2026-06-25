@@ -171,6 +171,11 @@ def ai_categorize(title, description):
         return fallback_heuristic_categorize(title, description)
 
 @app.route('/')
+def home():
+    return render_template('home.html')
+
+
+@app.route('/map')
 @login_required
 def index():
     if current_user.role in ['state_manager', 'admin']:
@@ -182,6 +187,22 @@ def index():
         else:
             return redirect(url_for('dashboard'))
     return render_template('index.html', inspecting=False)
+
+@app.route('/api/stats', methods=['GET'])
+def api_stats():
+    resolved = Issue.query.filter((Issue.status == 'Resolved') | (Issue.govt_status == 'DONE')).count()
+    citizens = User.query.filter_by(role='citizen').count()
+    districts = db.session.query(Issue.district).filter(Issue.district != None).distinct().all()
+    dist_set = set(d[0] for d in districts if d[0])
+    user_districts = db.session.query(User.district).filter(User.district != None, User.role == 'district_manager').distinct().all()
+    for d in user_districts:
+        if d[0]:
+            dist_set.add(d[0])
+    return jsonify({
+        'resolved': resolved,
+        'citizens': citizens,
+        'districts': len(dist_set)
+    })
 
 @app.route('/inspect/state/<string:state>')
 @login_required
@@ -460,21 +481,97 @@ def leaderboard():
 @app.route('/stats')
 @login_required
 def stats():
-    total_issues = Issue.query.count()
-    resolved_issues = Issue.query.filter_by(status='Resolved').count()
-    open_issues = Issue.query.filter(Issue.status != 'Resolved').count()
-    
-    # Category statistics
-    categories = ['Roads', 'Water & Sewerage', 'Waste Management', 'Streetlights', 'Utilities', 'Other']
-    cat_counts = {}
-    for cat in categories:
-        cat_counts[cat] = Issue.query.filter_by(category=cat).count()
+    selected_state = None
+    selected_district = None
+    states_list = []
+    districts_list = []
+
+    if current_user.role == 'admin':
+        # Admin gets state-level stats & selection of all states
+        states = db.session.query(Issue.state).filter(Issue.state != None).distinct().all()
+        states_list = sorted([s[0] for s in states if s[0]])
+        selected_state = request.args.get('state')
+        if not selected_state and states_list:
+            selected_state = states_list[0]
+            
+    elif current_user.role == 'state_manager':
+        # State Manager gets district-level statistics in their state
+        selected_state = current_user.state
+        districts = db.session.query(Issue.district).filter_by(state=selected_state).filter(Issue.district != None).distinct().all()
+        districts_list = sorted([d[0] for d in districts if d[0]])
+        selected_district = request.args.get('district')
+        if not selected_district and districts_list:
+            selected_district = districts_list[0]
+            
+    elif current_user.role in ['district_manager', 'citizen']:
+        # District Manager and Citizen get their home district details
+        selected_state = current_user.state
+        selected_district = current_user.district
+
+    # Query issues matching selected filters
+    query = Issue.query
+    if selected_state:
+        query = query.filter_by(state=selected_state)
+    if selected_district:
+        query = query.filter_by(district=selected_district)
         
+    issues = query.all()
+    
+    total_issues = len(issues)
+    resolved_issues = sum(1 for i in issues if i.status == 'Resolved' or i.govt_status == 'DONE')
+    open_issues = total_issues - resolved_issues
+    resolution_rate = round((resolved_issues / total_issues * 100), 1) if total_issues > 0 else 0.0
+    
+    # Category distribution
+    categories = ['Roads', 'Water & Sewerage', 'Waste Management', 'Streetlights', 'Utilities', 'Other']
+    cat_counts = {cat: 0 for cat in categories}
+    for i in issues:
+        cat = i.category if i.category in categories else 'Other'
+        cat_counts[cat] += 1
+
+    # Additional Analytics: Intensity ratios
+    high_count = sum(1 for i in issues if i.intensity == 'High')
+    med_count = sum(1 for i in issues if i.intensity == 'Medium')
+    low_count = sum(1 for i in issues if i.intensity == 'Low')
+
+    # Community Engagement: average comments & votes per issue
+    avg_comments = 0.0
+    avg_votes = 0.0
+    if total_issues > 0:
+        total_comments = sum(len(i.comments) for i in issues)
+        total_votes = sum(len(i.votes) for i in issues)
+        avg_comments = round(total_comments / total_issues, 1)
+        avg_votes = round(total_votes / total_issues, 1)
+        
+    # Serialize coordinate details for vector Leaflet heat mapping
+    issues_json = []
+    for i in issues:
+        if i.latitude is not None and i.longitude is not None:
+            issues_json.append({
+                'title': i.title,
+                'category': i.category,
+                'intensity': i.intensity,
+                'latitude': i.latitude,
+                'longitude': i.longitude,
+                'status': i.status
+            })
+            
     return render_template('stats.html', 
                            total_issues=total_issues,
                            resolved_issues=resolved_issues,
                            open_issues=open_issues,
-                           cat_counts=cat_counts)
+                           resolution_rate=resolution_rate,
+                           cat_counts=cat_counts,
+                           high_count=high_count,
+                           med_count=med_count,
+                           low_count=low_count,
+                           avg_comments=avg_comments,
+                           avg_votes=avg_votes,
+                           issues_json=issues_json,
+                           states_list=states_list,
+                           districts_list=districts_list,
+                           selected_state=selected_state,
+                           selected_district=selected_district)
 
 # --- API ENDPOINTS ---
 
@@ -555,6 +652,8 @@ def get_issues():
             'reporter_points': issue.reporter.points,
             'score': issue.vote_score,
             'user_vote': voted,
+            'district': issue.district,
+            'state': issue.state,
             'comments': comments_list,
             'logs': logs_list
         })
@@ -633,6 +732,10 @@ def report_issue():
         issue_district = current_user.district or "Unknown District"
         issue_state = current_user.state or "Unknown State"
 
+    if current_user.role == 'citizen':
+        if issue_district != current_user.district or issue_state != current_user.state:
+            return jsonify({'error': f"Cannot report issues outside your registered area ({current_user.district}, {current_user.state})."}), 403
+
     issue = Issue(
         title=title,
         description=description,
@@ -674,6 +777,10 @@ def report_issue():
 @login_required
 def vote_issue(issue_id):
     issue = Issue.query.get_or_404(issue_id)
+    if current_user.role == 'citizen':
+        if issue.district != current_user.district or issue.state != current_user.state:
+            return jsonify({'error': 'You can only vote on issues within your registered area.'}), 403
+
     vote_type = request.json.get('vote_type')
     
     if vote_type not in ['upvote', 'downvote']:
@@ -717,6 +824,10 @@ def vote_issue(issue_id):
 @login_required
 def comment_issue(issue_id):
     issue = Issue.query.get_or_404(issue_id)
+    if current_user.role == 'citizen':
+        if issue.district != current_user.district or issue.state != current_user.state:
+            return jsonify({'error': 'You can only comment on issues within your registered area.'}), 403
+
     content = request.json.get('content')
     
     if not content or len(content.strip()) == 0:

@@ -3,38 +3,63 @@
 {% block title %}Leaderboard - Community Hero{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 2rem; text-align: center;">
-    <h1 style="font-family: var(--font-heading); font-size: 2.25rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Performance Leaderboard</h1>
+<div style="margin-bottom: 2rem; text-align: center; position: relative; z-index: 10;">
+    <h1 style="font-family: var(--font-heading); font-size: 2.25rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 20px rgba(0, 242, 254, 0.15);">Performance Leaderboard</h1>
     <p style="color: var(--text-muted); max-width: 600px; margin: 0.5rem auto 0 auto;">Compare community performance, track active solving rates, and reward the top contributing citizens.</p>
 </div>
 
-<!-- Tab Navigation buttons -->
-<div style="display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 2rem; flex-wrap: wrap;">
-    <button class="btn btn-primary tab-btn" data-tab="citizens" onclick="showTab('citizens')">🏆 Top Citizens</button>
-    <button class="btn btn-secondary tab-btn" data-tab="districts" onclick="showTab('districts')">📍 District Standings ({{ selected_state }})</button>
-    <button class="btn btn-secondary tab-btn" data-tab="states" onclick="showTab('states')">🗺️ Inter-State Standings</button>
+<!-- Tab Navigation buttons (Redesigned with sliding underline) -->
+<div class="tabs-container" style="position: relative; display: flex; justify-content: center; gap: 1.5rem; margin: 0 auto 2.5rem auto; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; width: fit-content; z-index: 10;">
+    <button class="tab-link active" data-tab="citizens" onclick="switchLeaderboardTab(this, 'citizens')" style="background: none; border: none; color: var(--text-main); font-family: var(--font-heading); font-size: 1rem; font-weight: 700; cursor: pointer; padding: 0.5rem 1rem; transition: var(--transition-smooth); position: relative;">🏆 Top Citizens</button>
+    <button class="tab-link" data-tab="districts" onclick="switchLeaderboardTab(this, 'districts')" style="background: none; border: none; color: var(--text-muted); font-family: var(--font-heading); font-size: 1rem; font-weight: 700; cursor: pointer; padding: 0.5rem 1rem; transition: var(--transition-smooth); position: relative;">📍 District Standings</button>
+    <button class="tab-link" data-tab="states" onclick="switchLeaderboardTab(this, 'states')" style="background: none; border: none; color: var(--text-muted); font-family: var(--font-heading); font-size: 1rem; font-weight: 700; cursor: pointer; padding: 0.5rem 1rem; transition: var(--transition-smooth); position: relative;">🗺️ Inter-State Standings</button>
+    <!-- Sliding Underline -->
+    <div id="tab-underline" style="position: absolute; bottom: -1px; left: 0; height: 3px; background: linear-gradient(90deg, #FF7700, #FFFFFF, #129907); box-shadow: 0 0 10px rgba(18,153,7,0.8); border-radius: 2px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 0px;"></div>
 </div>
 
-<div style="max-width: 800px; margin: 0 auto; width: 100%;">
+<div style="max-width: 800px; margin: 0 auto; width: 100%; position: relative; z-index: 10;">
     
     <!-- Tab 1: Top Citizens -->
-    <div id="tab-citizens" class="glass-card">
+    <div id="tab-citizens" class="glass-card animate-in">
         <div class="glass-card-header">
             <h2>Top Citizens</h2>
-            <span class="badge" style="background: rgba(0, 242, 254, 0.1); color: var(--primary); border: 1px solid rgba(0, 242, 254, 0.2);">
-                Based on active contributions
-            </span>
+            <span class="badge badge-open">Based on contributions</span>
         </div>
         
-        <div class="leaderboard-list" style="margin-top: 1rem;">
+        <div class="leaderboard-list stagger-children" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
             {% if users %}
                 {% for u in users %}
-                    <div class="leaderboard-row" style="display: flex; justify-content: space-between; padding: 1rem; border-bottom: 1px solid var(--border-color); align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <span style="font-weight: 800; color: var(--primary); font-size: 1.15rem; width: 30px;">#{{ loop.index }}</span>
+                    {% set is_top3 = loop.index <= 3 %}
+                    {% set row_style = "" %}
+                    {% set rank_color = "var(--primary)" %}
+                    {% set badge_style = "" %}
+                    
+                    {% if loop.index == 1 %}
+                        {% set row_style = "background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.3); box-shadow: 0 0 20px rgba(251,191,36,0.25); border-radius: 12px;" %}
+                        {% set rank_color = "#fbbf24" %}
+                        {% set badge_style = "background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); box-shadow: 0 0 10px rgba(251,191,36,0.2);" %}
+                    {% elif loop.index == 2 %}
+                        {% set row_style = "background: rgba(156, 163, 175, 0.04); border: 1px solid rgba(156, 163, 175, 0.25); box-shadow: 0 0 15px rgba(156,163,175,0.15); border-radius: 12px;" %}
+                        {% set rank_color = "#d1d5db" %}
+                        {% set badge_style = "background: rgba(156,163,175,0.15); color: #d1d5db; border: 1px solid rgba(156,163,175,0.3);" %}
+                    {% elif loop.index == 3 %}
+                        {% set row_style = "background: rgba(180, 83, 9, 0.03); border: 1px solid rgba(180, 83, 9, 0.2); box-shadow: 0 0 15px rgba(180,83,9,0.15); border-radius: 12px;" %}
+                        {% set rank_color = "#b45309" %}
+                        {% set badge_style = "background: rgba(180,83,9,0.15); color: #b45309; border: 1px solid rgba(180,83,9,0.3);" %}
+                    {% else %}
+                        {% set row_style = "border-bottom: 1px solid var(--border-color); border-radius: 0;" %}
+                        {% set badge_style = "background: rgba(255,255,255,0.05); color: var(--text-main);" %}
+                    {% endif %}
+                    
+                    <div class="leaderboard-row hover-row animate-in" style="display: flex; justify-content: space-between; padding: 1.15rem 1.5rem; align-items: center; transition: all 0.3s ease; {{ row_style }}">
+                        <div style="display: flex; align-items: center; gap: 1rem; position: relative;">
+                            {% if loop.index == 1 %}
+                                <div style="position: absolute; top: -16px; left: 8px; font-size: 1.1rem; color: #fbbf24; line-height: 1;">♛</div>
+                            {% endif %}
+                            <span style="font-weight: 800; color: {{ rank_color }}; font-size: 1.15rem; width: 30px;">#{{ loop.index }}</span>
                             <span style="color: var(--text-main); font-weight: 600;">@{{ u.username }}</span>
                         </div>
-                        <span class="badge" style="background: rgba(255,255,255,0.05); font-weight: 700; color: var(--text-main);">{{ u.points }} pts</span>
+                        <span class="badge" style="font-weight: 700; padding: 0.35rem 0.75rem; border-radius: 20px; {{ badge_style }}">{{ u.points }} pts</span>
                     </div>
                 {% endfor %}
             {% else %}
@@ -44,19 +69,17 @@
     </div>
 
     <!-- Tab 2: District Standings -->
-    <div id="tab-districts" class="glass-card" style="display: none;">
+    <div id="tab-districts" class="glass-card animate-in" style="display: none;">
         <div class="glass-card-header">
             <h2>District Completion Rates</h2>
-            <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2);">
-                {{ selected_state }} State
-            </span>
+            <span class="badge badge-resolved">{{ selected_state }} State</span>
         </div>
         
-        <div class="leaderboard-list" style="margin-top: 1rem;">
+        <div class="leaderboard-list stagger-children" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
             {% if district_standings %}
                 {% for d in district_standings %}
-                    <div class="leaderboard-row" style="display: flex; flex-direction: column; padding: 1.25rem; border-bottom: 1px solid var(--border-color); gap: 0.5rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="leaderboard-row hover-row animate-in" style="display: flex; flex-direction: column; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); gap: 0.55rem; background: rgba(255,255,255,0.01);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                             <div style="display: flex; align-items: center; gap: 1rem;">
                                 <span style="font-weight: 800; color: var(--primary); font-size: 1.15rem; width: 30px;">#{{ loop.index }}</span>
                                 <span style="color: var(--text-main); font-weight: 600; font-family: var(--font-heading); font-size: 1.1rem;">{{ d.district }}</span>
@@ -67,7 +90,7 @@
                             </div>
                         </div>
                         <div style="height: 6px; background: rgba(255,255,255,0.04); border-radius: 3px; overflow: hidden; width: 100%;">
-                            <div style="height: 100%; width: {{ d.rate }}%; background: linear-gradient(90deg, var(--secondary), var(--primary));"></div>
+                            <div class="progress-bar-fill" data-width="{{ d.rate }}" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--secondary), var(--primary)); transition: width 1s ease-out; box-shadow: 0 0 10px rgba(0,242,254,0.3);"></div>
                         </div>
                     </div>
                 {% endfor %}
@@ -78,19 +101,17 @@
     </div>
 
     <!-- Tab 3: Inter-State Standings -->
-    <div id="tab-states" class="glass-card" style="display: none;">
+    <div id="tab-states" class="glass-card animate-in" style="display: none;">
         <div class="glass-card-header">
             <h2>State Completion Standings</h2>
-            <span class="badge" style="background: rgba(167, 139, 250, 0.15); color: #a78bfa; border: 1px solid rgba(167, 139, 250, 0.25);">
-                National overview
-            </span>
+            <span class="badge badge-progress">National overview</span>
         </div>
         
-        <div class="leaderboard-list" style="margin-top: 1rem;">
+        <div class="leaderboard-list stagger-children" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
             {% if state_standings %}
                 {% for s in state_standings %}
-                    <div class="leaderboard-row" style="display: flex; flex-direction: column; padding: 1.25rem; border-bottom: 1px solid var(--border-color); gap: 0.5rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="leaderboard-row hover-row animate-in" style="display: flex; flex-direction: column; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); gap: 0.55rem; background: rgba(255,255,255,0.01);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                             <div style="display: flex; align-items: center; gap: 1rem;">
                                 <span style="font-weight: 800; color: var(--primary); font-size: 1.15rem; width: 30px;">#{{ loop.index }}</span>
                                 <span style="color: var(--text-main); font-weight: 600; font-family: var(--font-heading); font-size: 1.1rem;">{{ s.state }} State</span>
@@ -101,7 +122,7 @@
                             </div>
                         </div>
                         <div style="height: 6px; background: rgba(255,255,255,0.04); border-radius: 3px; overflow: hidden; width: 100%;">
-                            <div style="height: 100%; width: {{ s.rate }}%; background: linear-gradient(90deg, var(--secondary), var(--primary));"></div>
+                            <div class="progress-bar-fill" data-width="{{ s.rate }}" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--secondary), var(--primary)); transition: width 1s ease-out; box-shadow: 0 0 10px rgba(0,242,254,0.3);"></div>
                         </div>
                     </div>
                 {% endfor %}
@@ -120,17 +141,75 @@
         document.getElementById('tab-citizens').style.display = tabId === 'citizens' ? 'block' : 'none';
         document.getElementById('tab-districts').style.display = tabId === 'districts' ? 'block' : 'none';
         document.getElementById('tab-states').style.display = tabId === 'states' ? 'block' : 'none';
-        
-        const btns = document.querySelectorAll('.tab-btn');
-        btns.forEach(btn => {
-            if (btn.getAttribute('data-tab') === tabId) {
-                btn.classList.add('btn-primary');
-                btn.classList.remove('btn-secondary');
-            } else {
-                btn.classList.add('btn-secondary');
-                btn.classList.remove('btn-primary');
-            }
-        });
     }
+
+    function switchLeaderboardTab(btn, tabId) {
+        showTab(tabId);
+        
+        // Remove active class from other links
+        document.querySelectorAll('.tab-link').forEach(link => {
+            link.classList.remove('active');
+            link.style.color = 'var(--text-muted)';
+        });
+        
+        // Add active class
+        btn.classList.add('active');
+        btn.style.color = 'var(--text-main)';
+        
+        // Update sliding underline
+        const underline = document.getElementById('tab-underline');
+        underline.style.width = btn.offsetWidth + 'px';
+        underline.style.left = btn.offsetLeft + 'px';
+
+        // Trigger staggered fade-in animations on active tab content rows
+        const activeTabContent = document.getElementById('tab-' + tabId);
+        if (activeTabContent) {
+            const rows = activeTabContent.querySelectorAll('.leaderboard-row');
+            rows.forEach((row, i) => {
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(15px)';
+                setTimeout(() => {
+                    row.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+                    row.style.opacity = '1';
+                    row.style.transform = 'translateY(0)';
+                }, 50 * i);
+            });
+
+            // Re-trigger progress bar animations if in districts/states
+            const bars = activeTabContent.querySelectorAll('.progress-bar-fill');
+            bars.forEach(bar => {
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    const w = bar.getAttribute('data-width');
+                    bar.style.width = w + '%';
+                }, 100);
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Set initial underline position
+        const activeBtn = document.querySelector('.tab-link.active');
+        if (activeBtn) {
+            const underline = document.getElementById('tab-underline');
+            underline.style.width = activeBtn.offsetWidth + 'px';
+            underline.style.left = activeBtn.offsetLeft + 'px';
+        }
+
+        // Trigger initial citizen list staggered animations
+        const activeTabContent = document.getElementById('tab-citizens');
+        if (activeTabContent) {
+            const rows = activeTabContent.querySelectorAll('.leaderboard-row');
+            rows.forEach((row, i) => {
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(15px)';
+                setTimeout(() => {
+                    row.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+                    row.style.opacity = '1';
+                    row.style.transform = 'translateY(0)';
+                }, 50 * i);
+            });
+        }
+    });
 </script>
 {% endblock %}

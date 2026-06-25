@@ -3,62 +3,688 @@
 {% block title %}Impact Dashboard - Community Hero{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 2rem;">
-    <h1 style="font-family: var(--font-heading); font-size: 2rem; font-weight: 800;">Impact Stats</h1>
-    <p style="color: var(--text-muted);">Real-time metrics demonstrating community problem-solving progress.</p>
+<style>
+    .stats-grid-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        position: relative;
+        z-index: 10;
+        margin-top: 1.5rem;
+    }
+
+    .insights-subgrid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+        margin-top: 1.5rem;
+    }
+
+    @media (min-width: 1024px) {
+        .stats-grid-row {
+            grid-template-columns: 7fr 5fr;
+        }
+        .insights-subgrid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    .glow-saffron-card {
+        border: 1px solid rgba(255, 119, 0, 0.2);
+        box-shadow: 0 0 15px rgba(255, 119, 0, 0.05);
+    }
+    .glow-saffron-card:hover {
+        border-color: rgba(255, 119, 0, 0.45);
+        box-shadow: 0 0 25px rgba(255, 119, 0, 0.12);
+    }
+
+    .glow-green-card {
+        border: 1px solid rgba(18, 153, 7, 0.2);
+        box-shadow: 0 0 15px rgba(18, 153, 7, 0.05);
+    }
+    .glow-green-card:hover {
+        border-color: rgba(18, 153, 7, 0.45);
+        box-shadow: 0 0 25px rgba(18, 153, 7, 0.12);
+    }
+
+    .glow-blue-card {
+        border: 1px solid rgba(0, 102, 255, 0.2);
+        box-shadow: 0 0 15px rgba(0, 102, 255, 0.05);
+    }
+    .glow-blue-card:hover {
+        border-color: rgba(0, 102, 255, 0.45);
+        box-shadow: 0 0 25px rgba(0, 102, 255, 0.12);
+    }
+
+    select.glass-input {
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 35px !important;
+        cursor: pointer;
+    }
+
+    /* ── Custom dark dropdown (replaces native select on stats map filter) ── */
+    .custom-select-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        flex: 1;
+    }
+    .custom-select-trigger {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        background: rgba(10, 14, 23, 0.95);
+        border: 1px solid rgba(255, 119, 0, 0.35);
+        border-radius: 8px;
+        padding: 0.4rem 0.9rem;
+        cursor: pointer;
+        font-family: var(--font-body);
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-main);
+        width: 100%;
+        user-select: none;
+        transition: border-color 0.2s;
+    }
+    .custom-select-trigger:hover {
+        border-color: rgba(255, 119, 0, 0.65);
+    }
+    .custom-select-trigger .arrow {
+        font-size: 0.65rem;
+        color: var(--primary);
+        transition: transform 0.2s;
+    }
+    .custom-select-wrapper.open .arrow {
+        transform: rotate(180deg);
+    }
+    .custom-select-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        background: rgba(10, 14, 23, 0.98);
+        border: 1px solid rgba(255, 119, 0, 0.4);
+        border-radius: 10px;
+        overflow: hidden;
+        z-index: 999;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(255,119,0,0.08);
+        backdrop-filter: blur(20px);
+    }
+    .custom-select-wrapper.open .custom-select-dropdown {
+        display: block;
+        animation: dropdownFadeIn 0.15s ease-out;
+    }
+    @keyframes dropdownFadeIn {
+        from { opacity: 0; transform: translateY(-6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .custom-select-option {
+        padding: 0.55rem 0.9rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-main);
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .custom-select-option:last-child { border-bottom: none; }
+    .custom-select-option:hover {
+        background: rgba(255, 119, 0, 0.12);
+        color: var(--primary);
+    }
+    .custom-select-option.selected {
+        background: rgba(255, 119, 0, 0.08);
+        color: var(--primary);
+        font-weight: 700;
+    }
+    .cat-dot {
+        width: 9px; height: 9px;
+        border-radius: 50%;
+        display: inline-block;
+        flex-shrink: 0;
+    }
+
+    .intensity-segment {
+        height: 100%;
+        cursor: pointer;
+        transition: transform 0.2s ease-in-out;
+    }
+    .intensity-segment:hover {
+        transform: scaleY(1.15);
+    }
+</style>
+
+<div style="margin-bottom: 2rem; text-align: center; position: relative; z-index: 10;">
+    <h1 style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 25px rgba(255, 119, 0, 0.15);">Impact Stats</h1>
+    <p style="color: var(--text-muted); max-width: 600px; margin: 0.5rem auto 0 auto;">Hyperlocal metrics and density analysis for local civic resolution.</p>
 </div>
 
-<div class="stats-grid">
-    <div class="glass-card stat-card">
-        <h3>Total Reported</h3>
-        <div class="stat-num">{{ total_issues }}</div>
-    </div>
-    
-    <div class="glass-card stat-card">
-        <h3>Resolved</h3>
-        <div class="stat-num" style="color: var(--success);">{{ resolved_issues }}</div>
-    </div>
-    
-    <div class="glass-card stat-card">
-        <h3>Resolution Rate</h3>
-        <div class="stat-num" style="color: var(--secondary);">
-            {% if total_issues > 0 %}
-                {{ ((resolved_issues / total_issues) * 100)|round(1) }}%
+<!-- Scope Filter Bar (Tiranga styling) -->
+<div class="glass-card animate-in" style="padding: 1.5rem; margin-bottom: 2rem; border-left: 4px solid var(--accent); position: relative; z-index: 100; box-shadow: var(--glass-shadow);">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1.5rem;">
+        <div>
+            <h2 style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+                Scope Explorer
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">
+                {% if current_user.role == 'admin' %}
+                    Select a State to view aggregated state-level analytics.
+                {% elif current_user.role == 'state_manager' %}
+                    Select a District in {{ current_user.state }} to view district-level analytics.
+                {% else %}
+                    Showing analytics for your home district.
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            {% if current_user.role == 'admin' %}
+                <form method="GET" action="{{ url_for('stats') }}" style="display: flex; gap: 0.75rem; align-items: center;">
+                    <label for="state-selector" style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); white-space: nowrap; margin-bottom: 0;">State:</label>
+                    <select id="state-selector" name="state" class="glass-input" onchange="this.form.submit()" style="background: rgba(10, 14, 23, 0.9); border: 1px solid var(--primary); padding: 0.5rem 1.5rem 0.5rem 1rem; border-radius: 8px; color: var(--text-main); font-family: var(--font-body); font-weight: 600; min-width: 220px; font-size: 0.9rem; outline: none;">
+                        {% for st in states_list %}
+                            <option value="{{ st }}" {% if st == selected_state %}selected{% endif %}>{{ st }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            {% elif current_user.role == 'state_manager' %}
+                <form method="GET" action="{{ url_for('stats') }}" style="display: flex; gap: 0.75rem; align-items: center;">
+                    <label for="district-selector" style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); white-space: nowrap; margin-bottom: 0;">District:</label>
+                    <select id="district-selector" name="district" class="glass-input" onchange="this.form.submit()" style="background: rgba(10, 14, 23, 0.9); border: 1px solid var(--primary); padding: 0.5rem 1.5rem 0.5rem 1rem; border-radius: 8px; color: var(--text-main); font-family: var(--font-body); font-weight: 600; min-width: 220px; font-size: 0.9rem; outline: none;">
+                        {% for dist in districts_list %}
+                            <option value="{{ dist }}" {% if dist == selected_district %}selected{% endif %}>{{ dist }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
             {% else %}
-                0%
+                <span class="badge" style="background: rgba(0, 102, 255, 0.15); color: var(--accent); border: 1px solid rgba(0, 102, 255, 0.35); padding: 0.55rem 1.25rem; font-size: 0.9rem; border-radius: 20px; font-weight: 700; text-transform: none; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>📍</span> {{ selected_district }}, {{ selected_state }}
+                </span>
             {% endif %}
         </div>
     </div>
+</div>
+
+<!-- Stats Counter Grid -->
+<div class="stats-grid animate-in" style="position: relative; z-index: 10; margin-bottom: 2rem;">
+    <!-- Stat 1: Total Reported -->
+    <div class="glass-card stat-card glow-saffron-card" style="padding: 1.75rem 1.25rem; text-align: center; position: relative; overflow: hidden; border-radius: 16px;">
+        <div style="font-size: 1.75rem; margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px rgba(255, 119, 0, 0.35));">📊</div>
+        <h3 style="font-family: var(--font-heading); font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem;">Total Reported</h3>
+        <div class="stat-num" data-target="{{ total_issues }}" style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 800; color: #ff9f43; margin-top: 0;">0</div>
+    </div>
     
-    <div class="glass-card stat-card">
-        <h3>Active Work</h3>
-        <div class="stat-num" style="color: var(--warning);">{{ open_issues }}</div>
+    <!-- Stat 2: Resolved -->
+    <div class="glass-card stat-card glow-green-card" style="padding: 1.75rem 1.25rem; text-align: center; position: relative; overflow: hidden; border-radius: 16px;">
+        <div style="font-size: 1.75rem; margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px rgba(18, 153, 7, 0.35));">✅</div>
+        <h3 style="font-family: var(--font-heading); font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem;">Resolved</h3>
+        <div class="stat-num" data-target="{{ resolved_issues }}" style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 800; color: #2ecc71; margin-top: 0;">0</div>
+    </div>
+    
+    <!-- Stat 3: Resolution Rate -->
+    <div class="glass-card stat-card glow-blue-card" style="padding: 1.75rem 1.25rem; text-align: center; position: relative; overflow: hidden; border-radius: 16px;">
+        <div style="font-size: 1.75rem; margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px rgba(0, 102, 255, 0.35));">📈</div>
+        <h3 style="font-family: var(--font-heading); font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem;">Resolution Rate</h3>
+        <div class="stat-num" data-target="{{ resolution_rate }}" data-suffix="%" style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 800; color: #54a0ff; margin-top: 0;">0%</div>
+    </div>
+    
+    <!-- Stat 4: Active Work -->
+    <div class="glass-card stat-card glow-saffron-card" style="padding: 1.75rem 1.25rem; text-align: center; position: relative; overflow: hidden; border-radius: 16px;">
+        <div style="font-size: 1.75rem; margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px rgba(255, 119, 0, 0.35));">⚠️</div>
+        <h3 style="font-family: var(--font-heading); font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem;">Active Work</h3>
+        <div class="stat-num" data-target="{{ open_issues }}" style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 800; color: #ff9f43; margin-top: 0;">0</div>
     </div>
 </div>
 
-<div class="grid-container" style="grid-template-columns: 1fr;">
-    <div class="glass-card">
-        <div class="glass-card-header">
-            <h2>Issues by Category</h2>
-        </div>
+<!-- Two Column Layout (left: detailed analytics & insights, right: Leaflet heatmap) -->
+<div class="stats-grid-row">
+    <!-- Left Column: Categories and Analytics Cards -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
         
-        <div class="chart-container">
-            {% for category, count in cat_counts.items() %}
-                {% set percent = 0 %}
-                {% if total_issues > 0 %}
-                    {% set percent = (count / total_issues) * 100 %}
-                {% endif %}
-                <div class="chart-bar-group">
-                    <div class="chart-label">
-                        <span>{{ category }}</span>
-                        <strong>{{ count }} ({{ percent|round(1) }}%)</strong>
+        <!-- Category Distribution Chart Section -->
+        <div class="glass-card animate-in" style="padding: 2rem;">
+            <div class="glass-card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+                <h2 style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0;">
+                    <span>📍</span> Issues by Category
+                </h2>
+                <span class="badge badge-open" style="background: rgba(18, 153, 7, 0.15); color: #2ecc71; border: 1px solid rgba(18, 153, 7, 0.35);">Live Counters</span>
+            </div>
+            
+            <div class="chart-container" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                {% for category, count in cat_counts.items() %}
+                    {% set percent = 0 %}
+                    {% if total_issues > 0 %}
+                        {% set percent = (count / total_issues) * 100 %}
+                    {% endif %}
+                    <div class="chart-bar-group" style="opacity: 0; transform: translateY(20px);">
+                        <div class="chart-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                            <span style="font-weight: 600; color: var(--text-main); font-family: var(--font-body);">{{ category }}</span>
+                            <strong style="color: var(--primary); font-family: var(--font-heading); font-size: 0.95rem; font-weight: 700;">{{ count }} ({{ percent|round(1) }}%)</strong>
+                        </div>
+                        <div class="chart-bar-track" style="height: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; overflow: hidden; width: 100%;">
+                            {% set bar_color = 'linear-gradient(90deg, #00f2fe, #4facfe)' %}
+                            {% if category == 'Roads' %}
+                                {% set bar_color = 'linear-gradient(90deg, #00f2fe, #0066ff)' %}
+                            {% elif category == 'Water & Sewerage' %}
+                                {% set bar_color = 'linear-gradient(90deg, #38bdf8, #3b82f6)' %}
+                            {% elif category == 'Waste Management' %}
+                                {% set bar_color = 'linear-gradient(90deg, #a78bfa, #8b5cf6)' %}
+                            {% elif category == 'Streetlights' %}
+                                {% set bar_color = 'linear-gradient(90deg, #fbbf24, #f59e0b)' %}
+                            {% elif category == 'Utilities' %}
+                                {% set bar_color = 'linear-gradient(90deg, #f87171, #ef4444)' %}
+                            {% endif %}
+                            <div class="chart-bar-fill" data-width="{{ percent }}" style="height: 100%; width: 0%; background: {{ bar_color }}; transition: width 1.2s cubic-bezier(0.1, 1, 0.1, 1); box-shadow: 0 0 8px rgba(0,242,254,0.2);"></div>
+                        </div>
                     </div>
-                    <div class="chart-bar-track">
-                        <div class="chart-bar-fill" style="width: {{ percent }}%;"></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Subgrid for analytics cards -->
+        <div class="insights-subgrid animate-in">
+            <!-- Analytics Card 1: Most Frequent Category Highlight -->
+            {% set max_cat = namespace(name='None', count=-1) %}
+            {% for cat, count in cat_counts.items() %}
+                {% if count > max_cat.count %}
+                    {% set max_cat.name = cat %}
+                    {% set max_cat.count = count %}
+                {% endif %}
+            {% endfor %}
+            {% set max_cat_pct = (max_cat.count / total_issues * 100)|round(1) if total_issues > 0 else 0.0 %}
+
+            <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid var(--primary); min-height: 200px;">
+                <div>
+                    <h3 style="font-family: var(--font-heading); font-size: 1rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Most Frequent Issue</h3>
+                    {% if total_issues > 0 %}
+                        <div style="font-family: var(--font-heading); font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>
+                                {% if max_cat.name == 'Roads' %}🚧
+                                {% elif max_cat.name == 'Water & Sewerage' %}🚰
+                                {% elif max_cat.name == 'Waste Management' %}♻️
+                                {% elif max_cat.name == 'Streetlights' %}💡
+                                {% elif max_cat.name == 'Utilities' %}⚡
+                                {% else %}📍{% endif %}
+                            </span>
+                            {{ max_cat.name }}
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.4;">
+                            Represents <strong style="color: var(--primary);">{{ max_cat.count }} reports</strong> ({{ max_cat_pct }}%) in the currently selected scope.
+                        </p>
+                    {% else %}
+                        <div style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; color: var(--text-muted); margin: 1rem 0;">No reported concerns</div>
+                        <p style="color: var(--text-muted); font-size: 0.85rem;">This district enjoys clean logs with zero open issues.</p>
+                    {% endif %}
+                </div>
+                {% if total_issues > 0 and max_cat_pct > 30.0 %}
+                    <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); text-transform: none; font-size: 0.75rem; width: fit-content; margin-top: 1rem; font-weight: 700;">🚨 Priority Focus Recommendation</span>
+                {% endif %}
+            </div>
+
+            <!-- Analytics Card 2: Intensity Ratio Bar -->
+            {% set total_intensity = high_count + med_count + low_count %}
+            {% set high_pct = (high_count / total_intensity * 100)|round(1) if total_intensity > 0 else 0.0 %}
+            {% set med_pct = (med_count / total_intensity * 100)|round(1) if total_intensity > 0 else 0.0 %}
+            {% set low_pct = (low_count / total_intensity * 100)|round(1) if total_intensity > 0 else 0.0 %}
+
+            <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid var(--accent); min-height: 200px;">
+                <div>
+                    <h3 style="font-family: var(--font-heading); font-size: 1rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Severity Breakdown</h3>
+                    
+                    <div style="height: 14px; width: 100%; border-radius: 8px; overflow: hidden; display: flex; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); margin-top: 0.75rem; margin-bottom: 0.75rem;">
+                        {% if total_intensity > 0 %}
+                            {% if high_count > 0 %}
+                                <div style="width: {{ high_pct }}%; background: linear-gradient(90deg, #ef4444, #f87171);" title="High: {{ high_count }}" class="intensity-segment"></div>
+                            {% endif %}
+                            {% if med_count > 0 %}
+                                <div style="width: {{ med_pct }}%; background: linear-gradient(90deg, #f59e0b, #fbbf24);" title="Medium: {{ med_count }}" class="intensity-segment"></div>
+                            {% endif %}
+                            {% if low_count > 0 %}
+                                <div style="width: {{ low_pct }}%; background: linear-gradient(90deg, #3b82f6, #60a5fa);" title="Low: {{ low_count }}" class="intensity-segment"></div>
+                            {% endif %}
+                        {% else %}
+                            <div style="width: 100%; text-align: center; color: var(--text-muted); font-size: 0.75rem; line-height: 14px;">No logs available</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Legend list -->
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        <span style="display: inline-flex; align-items: center; gap: 0.25rem;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span> High ({{ high_count }})</span>
+                        <span style="display: inline-flex; align-items: center; gap: 0.25rem;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#f59e0b;"></span> Med ({{ med_count }})</span>
+                        <span style="display: inline-flex; align-items: center; gap: 0.25rem;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#3b82f6;"></span> Low ({{ low_count }})</span>
                     </div>
                 </div>
-            {% endfor %}
+                <p style="color: var(--text-muted); font-size: 0.8rem; line-height: 1.3; margin-top: 0.5rem; margin-bottom: 0;">
+                    {% if high_pct > 40.0 %}
+                        ⚠️ Highly critical cluster! Action required on severe issues.
+                    {% else %}
+                        ℹ️ Distribution shows normal/moderate urgency profiles.
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Analytics Card 3: Community Collaboration Index -->
+            {% set collab_score = avg_comments * 2.0 + avg_votes %}
+            {% if collab_score >= 5.0 %}
+                {% set collab_rating = "Highly Active" %}
+                {% set collab_color = "var(--success)" %}
+                {% set collab_desc = "Excellent neighborhood cohesion! Locals comment and vote actively to coordinate repairs." %}
+            {% elif collab_score >= 2.0 %}
+                {% set collab_rating = "Active Community" %}
+                {% set collab_color = "#fbbf24" %}
+                {% set collab_desc = "Steady civic participation. Citizens regularly vote to bump critical issues." %}
+            {% elif collab_score > 0.0 %}
+                {% set collab_rating = "Moderate Activity" %}
+                {% set collab_color = "#38bdf8" %}
+                {% set collab_desc = "Occasional civic interaction. Suggest sharing links with neighbors to boost engagement." %}
+            {% else %}
+                {% set collab_rating = "Quiet Area" %}
+                {% set collab_color = "var(--text-muted)" %}
+                {% set collab_desc = "No community reactions recorded. Promote application locally to drive interactions." %}
+            {% endif %}
+
+            <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid var(--secondary); min-height: 200px; grid-column: 1 / -1;">
+                <div>
+                    <h3 style="font-family: var(--font-heading); font-size: 1rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Community Engagement Index</h3>
+                    <div style="display: flex; align-items: baseline; gap: 0.75rem; margin: 0.5rem 0;">
+                        <span style="font-family: var(--font-heading); font-size: 2.25rem; font-weight: 800; color: {{ collab_color }};">{{ collab_score|round(1) }}</span>
+                        <span style="font-size: 0.95rem; font-weight: 700; color: {{ collab_color }}; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 0.25rem 0.75rem; border-radius: 20px;">
+                            {{ collab_rating }}
+                        </span>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.45; margin-bottom: 0.5rem;">
+                        {{ collab_desc }}
+                    </p>
+                </div>
+                <div style="display: flex; gap: 1.5rem; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.5rem;">
+                    <div>Avg Votes/Issue: <strong style="color: var(--text-main);">{{ avg_votes }}</strong></div>
+                    <div>Avg Comments/Issue: <strong style="color: var(--text-main);">{{ avg_comments }}</strong></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right Column: Leaflet Heat Map & Real-time Filter -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div class="glass-card animate-in" style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem; height: 100%; min-height: 520px;">
+            <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem;">
+                <h2 style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; margin-bottom: 0;">
+                    🔥 Incident Density Map
+                </h2>
+                <span class="badge" id="heatmap-count-badge" style="background: rgba(0, 242, 254, 0.15); color: #00f2fe; border: 1px solid rgba(0, 242, 254, 0.35);">
+                    0 Hotspots
+                </span>
+            </div>
+
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0;">
+                Displays overlapping spatial indicators. Deeper color intersections reflect higher reported incident densities.
+            </p>
+
+            <!-- Map Filter Dropdown (custom dark-themed) -->
+            <div style="display: flex; align-items: center; gap: 0.75rem; background: rgba(0,0,0,0.15); border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: 10px;">
+                <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); white-space: nowrap; margin-bottom: 0;">Map Category Filter:</label>
+                <div class="custom-select-wrapper" id="cat-filter-wrapper" style="flex:1; min-width: 160px;">
+                    <div class="custom-select-trigger" id="cat-filter-trigger">
+                        <span id="cat-filter-label">🗂️ All Categories</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="custom-select-dropdown" id="cat-filter-dropdown">
+                        <div class="custom-select-option selected" data-value="All">🗂️ All Categories</div>
+                        <div class="custom-select-option" data-value="Roads"><span class="cat-dot" style="background:#00f2fe;"></span>Roads</div>
+                        <div class="custom-select-option" data-value="Water &amp; Sewerage"><span class="cat-dot" style="background:#38bdf8;"></span>Water &amp; Sewerage</div>
+                        <div class="custom-select-option" data-value="Waste Management"><span class="cat-dot" style="background:#a78bfa;"></span>Waste Management</div>
+                        <div class="custom-select-option" data-value="Streetlights"><span class="cat-dot" style="background:#fbbf24;"></span>Streetlights</div>
+                        <div class="custom-select-option" data-value="Utilities"><span class="cat-dot" style="background:#f87171;"></span>Utilities</div>
+                        <div class="custom-select-option" data-value="Other"><span class="cat-dot" style="background:#9ca3af;"></span>Other</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaflet Container -->
+            <div id="analytics-map" style="flex: 1; min-height: 380px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); box-shadow: var(--glass-shadow); position: relative; overflow: hidden;"></div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Helper to animate count values
+    function animateValue(obj, start, end, duration, suffix = '') {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const easeProgress = 1 - Math.pow(1 - progress, 3);
+            const currentValue = start + easeProgress * (end - start);
+            
+            if (Number.isInteger(end)) {
+                obj.innerHTML = Math.floor(currentValue) + suffix;
+            } else {
+                obj.innerHTML = currentValue.toFixed(1) + suffix;
+            }
+            
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                obj.innerHTML = end + suffix;
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -20px 0px'
+        };
+
+        // Scroll Observer for Stats Cards
+        const statsObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const numEl = entry.target.querySelector('.stat-num');
+                    if (numEl && !numEl.classList.contains('counted')) {
+                        numEl.classList.add('counted');
+                        const targetVal = parseFloat(numEl.getAttribute('data-target'));
+                        const suffix = numEl.getAttribute('data-suffix') || '';
+                        animateValue(numEl, 0, targetVal, 1500, suffix);
+                    }
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.stat-card').forEach(card => {
+            statsObserver.observe(card);
+        });
+
+        // Scroll Observer for Chart Bar Groups
+        const chartObserver = new IntersectionObserver((entries, observer) => {
+            let delayCount = 0;
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const group = entry.target;
+                    if (!group.classList.contains('animated')) {
+                        group.classList.add('animated');
+                        
+                        const currentDelay = delayCount * 100;
+                        delayCount++;
+                        
+                        setTimeout(() => {
+                            group.style.transition = 'opacity 0.6s ease-out, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                            group.style.opacity = '1';
+                            group.style.transform = 'translateY(0)';
+                            
+                            const barFill = group.querySelector('.chart-bar-fill');
+                            if (barFill) {
+                                const targetWidth = barFill.getAttribute('data-width');
+                                barFill.style.width = targetWidth + '%';
+                            }
+                        }, currentDelay);
+                    }
+                    observer.unobserve(group);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.chart-bar-group').forEach(group => {
+            chartObserver.observe(group);
+        });
+
+        // Initialize Leaflet Map
+        const issuesData = {{ issues_json|tojson }};
+        let centerLat = 12.9716;
+        let centerLng = 77.5946;
+        let validIssues = issuesData.filter(i => i.latitude !== null && i.longitude !== null);
+        
+        if (validIssues.length > 0) {
+            let sumLat = 0;
+            let sumLng = 0;
+            validIssues.forEach(i => {
+                sumLat += i.latitude;
+                sumLng += i.longitude;
+            });
+            centerLat = sumLat / validIssues.length;
+            centerLng = sumLng / validIssues.length;
+        }
+        
+        const analyticsMap = L.map('analytics-map', { minZoom: 2, maxZoom: 18 }).setView([centerLat, centerLng], validIssues.length > 0 ? 12 : 11);
+        
+        // Esri Satellite Imagery
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS',
+            maxZoom: 19
+        }).addTo(analyticsMap);
+        
+        // Transparent street labels overlay
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(analyticsMap);
+
+        let heatCircles = [];
+
+        function getCategoryColor(category) {
+            if (category === 'Roads') return '#00f2fe';
+            else if (category === 'Water & Sewerage') return '#38bdf8';
+            else if (category === 'Waste Management') return '#a78bfa';
+            else if (category === 'Streetlights') return '#fbbf24';
+            else if (category === 'Utilities') return '#f87171';
+            return '#9ca3af';
+        }
+
+        function renderHeatmap(categoryFilter = 'All') {
+            // Clear old layers
+            heatCircles.forEach(c => analyticsMap.removeLayer(c));
+            heatCircles = [];
+            
+            let count = 0;
+            validIssues.forEach(issue => {
+                if (categoryFilter !== 'All' && issue.category !== categoryFilter) {
+                    return;
+                }
+                
+                const color = getCategoryColor(issue.category);
+                const isHigh = issue.intensity === 'High';
+                const isMed  = issue.intensity === 'Medium';
+                
+                // Intensity-aware sizing
+                const outerR  = isHigh ? 600  : isMed ? 420  : 280;
+                const midR    = isHigh ? 280  : isMed ? 200  : 140;
+                const coreR   = isHigh ? 80   : isMed ? 55   : 35;
+                
+                // Ring 1 — wide soft halo
+                const halo = L.circle([issue.latitude, issue.longitude], {
+                    color: 'transparent',
+                    fillColor: color,
+                    fillOpacity: isHigh ? 0.18 : isMed ? 0.14 : 0.10,
+                    stroke: false,
+                    radius: outerR,
+                    interactive: false
+                }).addTo(analyticsMap);
+                
+                // Ring 2 — mid glow
+                const midGlow = L.circle([issue.latitude, issue.longitude], {
+                    color: 'transparent',
+                    fillColor: color,
+                    fillOpacity: isHigh ? 0.38 : isMed ? 0.30 : 0.22,
+                    stroke: false,
+                    radius: midR,
+                    interactive: false
+                }).addTo(analyticsMap);
+                
+                // Ring 3 — bright core dot (interactive, shows tooltip)
+                const core = L.circle([issue.latitude, issue.longitude], {
+                    color: color,
+                    weight: isHigh ? 3 : 2,
+                    fillColor: color,
+                    fillOpacity: 0.92,
+                    stroke: true,
+                    radius: coreR
+                }).addTo(analyticsMap);
+                
+                core.bindTooltip(`
+                    <strong style="color: #ffffff; font-family: var(--font-heading);">${issue.title}</strong><br>
+                    <span style="color: #aaa; font-size: 0.8rem;">Category: ${issue.category}</span><br>
+                    <span style="color: ${isHigh ? '#f87171' : isMed ? '#fbbf24' : '#4ade80'}; font-size: 0.8rem; font-weight:700;">⚡ ${issue.intensity} Urgency</span>
+                `, {
+                    className: 'glass-tooltip',
+                    direction: 'top',
+                    opacity: 0.97
+                });
+                
+                heatCircles.push(halo, midGlow, core);
+                count++;
+            });
+            
+            const countBadge = document.getElementById('heatmap-count-badge');
+            if (countBadge) {
+                countBadge.innerText = `${count} Hotspot${count !== 1 ? 's' : ''}`;
+            }
+        }
+
+        // Initial paint
+        renderHeatmap();
+
+        // ── Custom dropdown logic ──────────────────────────────────────────
+        const wrapper  = document.getElementById('cat-filter-wrapper');
+        const trigger  = document.getElementById('cat-filter-trigger');
+        const dropdown = document.getElementById('cat-filter-dropdown');
+        const label    = document.getElementById('cat-filter-label');
+        let currentFilter = 'All';
+
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            wrapper.classList.toggle('open');
+        });
+
+        document.addEventListener('click', () => wrapper.classList.remove('open'));
+
+        dropdown.querySelectorAll('.custom-select-option').forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const val = opt.getAttribute('data-value');
+                currentFilter = val;
+                // update label
+                label.innerHTML = opt.innerHTML;
+                // update selected state
+                dropdown.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                wrapper.classList.remove('open');
+                renderHeatmap(val);
+            });
+        });
+    });
+</script>
 {% endblock %}
