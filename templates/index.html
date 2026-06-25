@@ -329,6 +329,8 @@
     const inspecting = {% if inspecting %}true{% else %}false{% endif %};
     const inspectDistrict = "{{ inspect_district or '' }}";
     const inspectState = "{{ inspect_state or '' }}";
+    const profileLat = {% if current_user.latitude %}{{ current_user.latitude }}{% else %}null{% endif %};
+    const profileLng = {% if current_user.longitude %}{{ current_user.longitude }}{% else %}null{% endif %};
 </script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 {% endblock %}

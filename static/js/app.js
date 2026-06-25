@@ -5,6 +5,7 @@ let activeIssueId = null;
 let activeIssueData = null;
 let allIssues = [];
 let currentUserLocation = null;
+let userLocationMarker = null;
 
 // Default coordinates (centered on seeded Bangalore area)
 const defaultLat = 12.9716;
@@ -74,33 +75,47 @@ function initMap() {
         }
     }
 
-    // Attempt to center map on user's current location and place a marker
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((position) => {
-            const userLat = position.coords.latitude;
-            const userLng = position.coords.longitude;
-            currentUserLocation = [userLat, userLng];
-            
-            // Only auto-center on current location for citizens, to avoid shifting managers' view
-            if (userRole === 'citizen') {
-                map.setView([userLat, userLng], 15);
-            }
-            
-            // Add a special glowing pulse marker for current location
-            const userIcon = L.divIcon({
-                className: 'user-location-marker',
-                html: '<div style="background-color: #00f2fe; width: 14px; height: 14px; border-radius: 50%; border: 3px solid #ffffff; box-shadow: 0 0 16px #00f2fe; animation: pulse 2s infinite;"></div>',
-                iconSize: [14, 14],
-                iconAnchor: [7, 7]
-            });
-            
-            L.marker([userLat, userLng], { icon: userIcon })
-                .addTo(map)
-                .bindTooltip("You are here", { permanent: false, direction: 'top' });
+function setUserMarker(lat, lng, label = "You are here") {
+    if (userLocationMarker) {
+        map.removeLayer(userLocationMarker);
+    }
+    const userIcon = L.divIcon({
+        className: 'user-location-marker',
+        html: '<div style="background-color: #00f2fe; width: 14px; height: 14px; border-radius: 50%; border: 3px solid #ffffff; box-shadow: 0 0 16px #00f2fe; animation: pulse 2s infinite;"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+    });
+    userLocationMarker = L.marker([lat, lng], { icon: userIcon })
+        .addTo(map)
+        .bindTooltip(label, { permanent: false, direction: 'top' });
+}
+
+    // Center map: prioritize registered profile location to avoid inaccurate browser IP geolocations
+    if (typeof profileLat !== 'undefined' && profileLat && profileLng) {
+        currentUserLocation = [profileLat, profileLng];
+        setUserMarker(profileLat, profileLng, "Your Registered Location");
+        
+        // Auto-center for citizen
+        if (userRole === 'citizen') {
+            map.setView([profileLat, profileLng], 14);
+        }
+    } else {
+        // Fallback to browser geolocation on load if profile location is missing
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                currentUserLocation = [userLat, userLng];
                 
-        }, (err) => {
-            console.warn("Geolocation service failed or permission denied. Defaulting coordinates.");
-        });
+                setUserMarker(userLat, userLng, "You are here");
+                
+                if (userRole === 'citizen') {
+                    map.setView([userLat, userLng], 14);
+                }
+            }, (err) => {
+                console.warn("Geolocation service failed or permission denied. Defaulting coordinates.");
+            });
+        }
     }
 
     // Map Click: Open report modal with coordinates (Only citizens can report)
@@ -1038,18 +1053,27 @@ function getFuzzyScore(q, target) {
 
 // Pan map back to user's tracked current location
 function locateUser() {
-    if (currentUserLocation) {
-        map.setView(currentUserLocation, 16);
-    } else {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((position) => {
-                const userLat = position.coords.latitude;
-                const userLng = position.coords.longitude;
-                currentUserLocation = [userLat, userLng];
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+            currentUserLocation = [userLat, userLng];
+            setUserMarker(userLat, userLng, "You are here (Current Device Location)");
+            map.setView(currentUserLocation, 16);
+        }, (err) => {
+            if (typeof profileLat !== 'undefined' && profileLat && profileLng) {
+                currentUserLocation = [profileLat, profileLng];
+                setUserMarker(profileLat, profileLng, "Your Registered Location");
                 map.setView(currentUserLocation, 16);
-            }, (err) => {
+            } else {
                 alert("Could not retrieve current position. Check your browser location permissions.");
-            });
+            }
+        });
+    } else {
+        if (typeof profileLat !== 'undefined' && profileLat && profileLng) {
+            currentUserLocation = [profileLat, profileLng];
+            setUserMarker(profileLat, profileLng, "Your Registered Location");
+            map.setView(currentUserLocation, 16);
         } else {
             alert("Geolocation is not supported by your browser.");
         }
