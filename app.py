@@ -374,15 +374,6 @@ def register():
                         <div style="padding: 30px 25px; color: #334155; line-height: 1.6; font-size: 1rem;">
                             <p style="margin-top: 0;">Hello <strong>{username}</strong>,</p>
                             <p>Thank you for joining the <strong>Community Hero</strong> initiative! Your account has been registered successfully.</p>
-                            
-                            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; margin: 20px 0;">
-                                <h3 style="margin-top: 0; color: #0f172a; font-size: 0.95rem;">Registered Jurisdictional Details:</h3>
-                                <ul style="margin: 0; padding-left: 20px; color: #475569; font-size: 0.9rem;">
-                                    <li><strong>State:</strong> {state}</li>
-                                    <li><strong>District:</strong> {district}</li>
-                                    <li><strong>Registered Address:</strong> {address}</li>
-                                </ul>
-                            </div>
 
                             <h3 style="color: #0f172a; font-size: 1.05rem; margin-top: 25px; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">How to Earn Points & Climb the Leaderboard</h3>
                             <p>Every contribution counts! Here is how you can earn civic status points:</p>
