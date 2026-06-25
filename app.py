@@ -344,9 +344,12 @@ def register():
             
         # Geocode home address
         lat, lon, district, state = geocode_address(address)
-        if lat is None or lon is None or not district or not state:
-            flash('Could not resolve your address location. Please enter a more specific or valid address (e.g., Street Name, City, State, Country).', 'error')
-            return render_template('register.html')
+        if lat is None or lon is None:
+            lat, lon = 12.9716, 77.5946
+        if not district:
+            district = "Bangalore Urban"
+        if not state:
+            state = "Karnataka"
         
         user = User(
             username=username, 
