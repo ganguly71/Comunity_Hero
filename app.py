@@ -35,13 +35,12 @@ def geocode_address(address_str):
                 lon = float(first.get('lon'))
                 address = first.get('address', {})
                 district = (address.get('county') or address.get('city_district') or 
-                            address.get('state_district') or address.get('city') or 'Bangalore Urban')
-                state = address.get('state') or 'Karnataka'
+                            address.get('state_district') or address.get('city') or None)
+                state = address.get('state') or None
                 return lat, lon, district, state
     except Exception as e:
         print(f"Forward Geocoding error: {e}")
-    # Fallback to Bangalore defaults
-    return 12.9716, 77.5946, "Bangalore Urban", "Karnataka"
+    return None, None, None, None
 
 def reverse_geocode(lat, lon):
     try:
@@ -52,12 +51,12 @@ def reverse_geocode(lat, lon):
             data = r.json()
             address = data.get('address', {})
             district = (address.get('county') or address.get('city_district') or 
-                        address.get('state_district') or address.get('city') or 'Bangalore Urban')
-            state = address.get('state') or 'Karnataka'
+                        address.get('state_district') or address.get('city') or None)
+            state = address.get('state') or None
             return district, state
     except Exception as e:
         print(f"Reverse Geocoding error: {e}")
-    return "Bangalore Urban", "Karnataka"
+    return None, None
 
 # Load environment variables
 load_dotenv()
@@ -345,6 +344,9 @@ def register():
             
         # Geocode home address
         lat, lon, district, state = geocode_address(address)
+        if lat is None or lon is None or not district or not state:
+            flash('Could not resolve your address location. Please enter a more specific or valid address (e.g., Street Name, City, State, Country).', 'error')
+            return render_template('register.html')
         
         user = User(
             username=username, 
@@ -888,9 +890,9 @@ def report_issue():
 
     # Reverse geocode the issue coordinate to get district and state
     issue_district, issue_state = reverse_geocode(latitude, longitude)
-    if issue_district == "Unknown District" or issue_state == "Unknown State":
-        issue_district = current_user.district or "Unknown District"
-        issue_state = current_user.state or "Unknown State"
+    if not issue_district or not issue_state or issue_district == "Unknown District" or issue_state == "Unknown State":
+        issue_district = current_user.district
+        issue_state = current_user.state
 
     if current_user.role == 'citizen':
         if issue_district != current_user.district or issue_state != current_user.state:
@@ -925,6 +927,44 @@ def report_issue():
     )
     db.session.add(log)
     db.session.commit()
+
+    # Send confirmation email to the reporter
+    if current_user.email:
+        subject = f"[Community Hero] Confirmation: Issue #{issue.id} Reported"
+        html_content = f"""
+        <html>
+            <body>
+                <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 30px 15px; margin: 0; min-height: 100%;">
+                    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 25px; text-align: center; border-bottom: 3px solid #00f2fe;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 1.5rem; letter-spacing: 1px; font-weight: 700;">REPORT RECEIVED</h1>
+                        </div>
+                        <div style="padding: 30px 25px; color: #334155; line-height: 1.6; font-size: 1rem;">
+                            <p style="margin-top: 0;">Hello <strong>{current_user.username}</strong>,</p>
+                            <p>Thank you for submitting a report to the <strong>Community Hero</strong> initiative! We have successfully registered your report for: <strong style="color: #0f172a;">"{issue.title}"</strong>.</p>
+                            
+                            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                                <h3 style="margin-top: 0; color: #0f172a; font-size: 0.95rem;">Report Details:</h3>
+                                <ul style="margin: 0; padding-left: 20px; color: #475569; font-size: 0.9rem;">
+                                    <li><strong>Category:</strong> {issue.category}</li>
+                                    <li><strong>Intensity:</strong> {issue.intensity}</li>
+                                    <li><strong>Jurisdiction:</strong> {issue.district}, {issue.state}</li>
+                                    <li><strong>Status:</strong> {issue.status}</li>
+                                </ul>
+                            </div>
+                            
+                            <p>Our district management team will review this report and keep you updated as status changes are made.</p>
+                        </div>
+                        <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid #e2e8f0;">
+                            <p style="margin: 0 0 5px 0; font-weight: 600;">Community Hero Initiative</p>
+                            <p style="margin: 0;">This operational email confirms your civic report submission.</p>
+                        </div>
+                    </div>
+                </div>
+            </body>
+        </html>
+        """
+        send_brevo_email(current_user.email, current_user.username, subject, html_content)
     
     return jsonify({
         'success': True,
