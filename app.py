@@ -1552,7 +1552,7 @@ def seed_database():
         longitude=77.64115
     )
     u2.set_password('password123')
-
+ 
     u3 = User(
         username='citizen_pune',
         email='pune_citizen@example.com',
@@ -1565,7 +1565,7 @@ def seed_database():
         longitude=73.8567
     )
     u3.set_password('password123')
-
+ 
     u4 = User(
         username='citizen_delhi',
         email='delhi_citizen@example.com',
@@ -1578,8 +1578,87 @@ def seed_database():
         longitude=77.2090
     )
     u4.set_password('password123')
+
+    # Additional Citizens
+    u5 = User(
+        username='citizen_priya',
+        email='priya@example.com',
+        points=240,
+        role='citizen',
+        state='Karnataka',
+        district='Bangalore Urban',
+        address='Koramangala, Bengaluru, Karnataka, India',
+        latitude=12.9352,
+        longitude=77.6245
+    )
+    u5.set_password('password123')
+
+    u6 = User(
+        username='citizen_rahul',
+        email='rahul@example.com',
+        points=180,
+        role='citizen',
+        state='Maharashtra',
+        district='Pune',
+        address='Kothrud, Pune, Maharashtra, India',
+        latitude=18.5074,
+        longitude=73.8077
+    )
+    u6.set_password('password123')
+
+    u7 = User(
+        username='citizen_amit',
+        email='amit@example.com',
+        points=95,
+        role='citizen',
+        state='Delhi',
+        district='New Delhi',
+        address='Dwarka, New Delhi, Delhi, India',
+        latitude=28.5804,
+        longitude=77.0600
+    )
+    u7.set_password('password123')
+
+    u8 = User(
+        username='citizen_sunita',
+        email='sunita@example.com',
+        points=150,
+        role='citizen',
+        state='Karnataka',
+        district='Bangalore Urban',
+        address='Jayanagar, Bengaluru, Karnataka, India',
+        latitude=12.9250,
+        longitude=77.5890
+    )
+    u8.set_password('password123')
+
+    u9 = User(
+        username='citizen_vivek',
+        email='vivek@example.com',
+        points=310,
+        role='citizen',
+        state='Maharashtra',
+        district='Pune',
+        address='Viman Nagar, Pune, Maharashtra, India',
+        latitude=18.5590,
+        longitude=73.7925
+    )
+    u9.set_password('password123')
+
+    u10 = User(
+        username='citizen_ananya',
+        email='ananya@example.com',
+        points=40,
+        role='citizen',
+        state='Delhi',
+        district='New Delhi',
+        address='Saket, New Delhi, Delhi, India',
+        latitude=28.5244,
+        longitude=77.2100
+    )
+    u10.set_password('password123')
     
-    db.session.add_all([u1, u2, u3, u4])
+    db.session.add_all([u1, u2, u3, u4, u5, u6, u7, u8, u9, u10])
     db.session.commit()
     
     # Create issues
@@ -1625,7 +1704,7 @@ def seed_database():
         district='Bangalore Urban',
         user_id=u1.id
     )
-
+ 
     i4 = Issue(
         title='Water Supply Leakage on FC Road',
         description='Fresh municipal water is leaking from the underground main pipe on FC Road near Starbucks. Wasting thousands of liters daily.',
@@ -1640,7 +1719,7 @@ def seed_database():
         user_id=u3.id,
         govt_status_updated_at=datetime.utcnow()
     )
-
+ 
     i5 = Issue(
         title='Broken Streetlight near Connaught Place',
         description='Inner circle block A streetlights have been completely dark for 3 days. Creates safety hazard for shoppers.',
@@ -1654,7 +1733,7 @@ def seed_database():
         district='New Delhi',
         user_id=u4.id
     )
-
+ 
     i6 = Issue(
         title='Public Park Overgrown and Trash Accumulation',
         description='The public park near FC Road has overgrown weeds and there is a lot of plastic litter scattered around the walking path.',
@@ -1668,7 +1747,7 @@ def seed_database():
         district='Pune',
         user_id=u3.id
     )
-
+ 
     i7 = Issue(
         title='Overflowing Drainage near CP',
         description='There is an overflowing sewage manhole near block B of Connaught Place, causing a terrible smell and pedestrian blockages.',
@@ -1682,7 +1761,7 @@ def seed_database():
         district='New Delhi',
         user_id=u4.id
     )
-
+ 
     i8 = Issue(
         title='Damaged Traffic Signal on 100 Feet Rd',
         description='The pedestrian crossing signal is damaged and flashing red constantly, causing confusion and near-misses.',
@@ -1696,7 +1775,7 @@ def seed_database():
         district='Bangalore Urban',
         user_id=u2.id
     )
-
+ 
     i9 = Issue(
         title='Illegal Commercial Dumping',
         description='A local restaurant is dumping waste bins directly on the footpath behind MG Road every evening.',
@@ -1710,17 +1789,250 @@ def seed_database():
         district='Bangalore Urban',
         user_id=u1.id
     )
+
+    # NEW DETAILED ISSUES
+    i10 = Issue(
+        title='Water Pipeline Burst in Koramangala',
+        description='A major municipal water pipe has burst under the main road in Block 3 Koramangala. Water is shooting up to 10 feet in the air and flooding local shops.',
+        intensity='High',
+        category='Water & Sewerage',
+        latitude=12.9345,
+        longitude=77.6260,
+        status='Resolved',
+        govt_status='RESOLVED',
+        state='Karnataka',
+        district='Bangalore Urban',
+        user_id=u5.id,
+        govt_status_updated_at=datetime.utcnow()
+    )
+
+    i11 = Issue(
+        title='Broken Footpath Tiles in Jayanagar 4th Block',
+        description='Dozens of walking tiles are cracked or missing completely on the main boulevard. Multiple senior citizens have tripped and fallen here.',
+        intensity='Medium',
+        category='Roads',
+        latitude=12.9262,
+        longitude=77.5910,
+        status='In Progress',
+        govt_status='UNDER INVESTIGATION',
+        state='Karnataka',
+        district='Bangalore Urban',
+        user_id=u8.id,
+        govt_status_updated_at=datetime.utcnow()
+    )
+
+    i12 = Issue(
+        title='Dangerous Open Manhole on Sarjapur Road',
+        description='An open sewer manhole has been left completely uncovered on the busy Sarjapur Road junction. No safety signs or cones are placed.',
+        intensity='High',
+        category='Water & Sewerage',
+        latitude=12.9160,
+        longitude=77.6615,
+        status='Open',
+        govt_status='NOT VISITED',
+        state='Karnataka',
+        district='Bangalore Urban',
+        user_id=u5.id
+    )
+
+    i13 = Issue(
+        title='Overgrown Trees Blocking Traffic Lights',
+        description='Lush branches are completely covering the traffic signal at Koramangala 80 Feet Road junction, causing major transit confusion.',
+        intensity='Low',
+        category='Traffic & Signage',
+        latitude=12.9290,
+        longitude=77.6210,
+        status='Resolved',
+        govt_status='RESOLVED',
+        state='Karnataka',
+        district='Bangalore Urban',
+        user_id=u8.id,
+        govt_status_updated_at=datetime.utcnow()
+    )
+
+    i14 = Issue(
+        title='Missing Stormwater Manhole Cover in Kothrud',
+        description='A deep stormwater drain has been left uncovered on a dark street corner in Kothrud, Pune. Highly dangerous for children playing nearby.',
+        intensity='High',
+        category='Water & Sewerage',
+        latitude=18.5080,
+        longitude=73.8090,
+        status='Open',
+        govt_status='NOT VISITED',
+        state='Maharashtra',
+        district='Pune',
+        user_id=u6.id
+    )
+
+    i15 = Issue(
+        title='Completely Dark Stretch on Baner Road',
+        description='Five consecutive streetlights have failed near the highway bypass on Baner Road. The road is completely pitch black at night.',
+        intensity='Medium',
+        category='Streetlights',
+        latitude=18.5605,
+        longitude=73.7910,
+        status='Resolved',
+        govt_status='RESOLVED',
+        state='Maharashtra',
+        district='Pune',
+        user_id=u9.id,
+        govt_status_updated_at=datetime.utcnow()
+    )
+
+    i16 = Issue(
+        title='Illegal Flex Banners Blocking Pedestrian Crossings',
+        description='Large political banner frames have been erected directly blocking the sightlines of pedestrian crossings near Pune University.',
+        intensity='Low',
+        category='Traffic & Signage',
+        latitude=18.5290,
+        longitude=73.8420,
+        status='Open',
+        govt_status='UNDER INVESTIGATION',
+        state='Maharashtra',
+        district='Pune',
+        user_id=u6.id
+    )
+
+    i17 = Issue(
+        title='Uncollected Commercial Garbage Accumulation near River',
+        description='Tons of plastic waste and food containers have been dumped along the Mutha river bed near Deccan. Foul stench spreading.',
+        intensity='High',
+        category='Waste Management',
+        latitude=18.5150,
+        longitude=73.8320,
+        status='In Progress',
+        govt_status='ONGOING',
+        state='Maharashtra',
+        district='Pune',
+        user_id=u9.id,
+        govt_status_updated_at=datetime.utcnow()
+    )
+
+    i18 = Issue(
+        title='Deep Potholes on Ring Road near Lajpat Nagar',
+        description='Multiple massive craters have developed on the busy Ring Road bridge, causing severe traffic jams and vehicle damage.',
+        intensity='High',
+        category='Roads',
+        latitude=28.5675,
+        longitude=77.2440,
+        status='Resolved',
+        govt_status='RESOLVED',
+        state='Delhi',
+        district='New Delhi',
+        user_id=u7.id,
+        govt_status_updated_at=datetime.utcnow()
+    )
+
+    i19 = Issue(
+        title='Severe Water Logging near Dwarka Sector 10 Metro',
+        description='Even after minor rain, the entire access road to Dwarka Sector 10 Metro station gets flooded with ankle-deep sewage water.',
+        intensity='High',
+        category='Water & Sewerage',
+        latitude=28.5815,
+        longitude=77.0610,
+        status='In Progress',
+        govt_status='ONGOING',
+        state='Delhi',
+        district='New Delhi',
+        user_id=u7.id,
+        govt_status_updated_at=datetime.utcnow()
+    )
+
+    i20 = Issue(
+        title='Broken Benches and Overgrown Walkways in Lodhi Park',
+        description='Several concrete benches are cracked or toppled, and walking paths are covered with thorns and dry bushes.',
+        intensity='Low',
+        category='Parks & Recreation',
+        latitude=28.5910,
+        longitude=77.2210,
+        status='Open',
+        govt_status='NOT VISITED',
+        state='Delhi',
+        district='New Delhi',
+        user_id=u10.id
+    )
     
-    db.session.add_all([i1, i2, i3, i4, i5, i6, i7, i8, i9])
+    db.session.add_all([
+        i1, i2, i3, i4, i5, i6, i7, i8, i9, 
+        i10, i11, i12, i13, i14, i15, i16, i17, i18, i19, i20
+    ])
     db.session.commit()
     
-    # Add comments and logs
-    v1 = Vote(issue_id=i1.id, user_id=u2.id, vote_type='upvote')
-    c1 = Comment(issue_id=i1.id, user_id=u2.id, content="Agreed! Almost popped my tire here yesterday.")
-    log1 = UpdateLog(issue_id=i1.id, user_id=u1.id, content="Issue reported to the community.", status_update="Open")
-    log2 = UpdateLog(issue_id=i1.id, user_id=dm_blr.id, content="Government status updated to ONGOING. Patch team scheduled.", status_update="ONGOING")
+    # Add votes
+    votes = [
+        # i1 votes
+        Vote(issue_id=i1.id, user_id=u2.id, vote_type='upvote'),
+        Vote(issue_id=i1.id, user_id=u5.id, vote_type='upvote'),
+        Vote(issue_id=i1.id, user_id=u8.id, vote_type='upvote'),
+        # i12 open manhole (needs high score)
+        Vote(issue_id=i12.id, user_id=u1.id, vote_type='upvote'),
+        Vote(issue_id=i12.id, user_id=u2.id, vote_type='upvote'),
+        Vote(issue_id=i12.id, user_id=u3.id, vote_type='upvote'),
+        Vote(issue_id=i12.id, user_id=u4.id, vote_type='upvote'),
+        Vote(issue_id=i12.id, user_id=u8.id, vote_type='upvote'),
+        Vote(issue_id=i12.id, user_id=u9.id, vote_type='upvote'),
+        Vote(issue_id=i12.id, user_id=u10.id, vote_type='upvote'),
+        # i10 resolved votes
+        Vote(issue_id=i10.id, user_id=u1.id, vote_type='upvote'),
+        Vote(issue_id=i10.id, user_id=u8.id, vote_type='upvote'),
+        # i4 votes
+        Vote(issue_id=i4.id, user_id=u9.id, vote_type='upvote'),
+        Vote(issue_id=i4.id, user_id=u6.id, vote_type='upvote'),
+        # i14 votes
+        Vote(issue_id=i14.id, user_id=u3.id, vote_type='upvote'),
+        Vote(issue_id=i14.id, user_id=u9.id, vote_type='upvote'),
+        # i17 votes
+        Vote(issue_id=i17.id, user_id=u6.id, vote_type='upvote'),
+        # i19 votes
+        Vote(issue_id=i19.id, user_id=u10.id, vote_type='upvote'),
+        Vote(issue_id=i19.id, user_id=u4.id, vote_type='upvote')
+    ]
+    db.session.add_all(votes)
     
-    db.session.add_all([v1, c1, log1, log2])
+    # Add comments
+    comments = [
+        Comment(issue_id=i1.id, user_id=u2.id, content="Agreed! Almost popped my tire here yesterday."),
+        Comment(issue_id=i1.id, user_id=u5.id, content="This is on my daily route. Truly dangerous at night."),
+        Comment(issue_id=i12.id, user_id=u1.id, content="Oh wow, this is a death trap. I hope the district manager acts fast."),
+        Comment(issue_id=i12.id, user_id=u8.id, content="I put some branches inside to warn motorists, but we need a cover!"),
+        Comment(issue_id=i10.id, user_id=u8.id, content="Thanks for the lightning fast resolution! Clean water is no longer flooding the pavement."),
+        Comment(issue_id=i14.id, user_id=u9.id, content="Very risky, especially with monsoons starting soon."),
+        Comment(issue_id=i17.id, user_id=u3.id, content="The municipal bins nearby are completely broken. People have no choice."),
+        Comment(issue_id=i19.id, user_id=u4.id, content="Every single monsoon this road becomes a river. Terrible city drainage design!")
+    ]
+    db.session.add_all(comments)
+    
+    # Add UpdateLogs (user issue progress logs)
+    logs = [
+        # i1 logs
+        UpdateLog(issue_id=i1.id, user_id=u1.id, content="Issue reported to the community.", status_update="Open"),
+        UpdateLog(issue_id=i1.id, user_id=dm_blr.id, content="Government status updated to ONGOING. Patch team scheduled.", status_update="In Progress"),
+        # i10 resolved pipeline logs
+        UpdateLog(issue_id=i10.id, user_id=u5.id, content="Water pipeline burst reported.", status_update="Open"),
+        UpdateLog(issue_id=i10.id, user_id=dm_blr.id, content="Water division team sent to location to investigate.", status_update="Under Review"),
+        UpdateLog(issue_id=i10.id, user_id=dm_blr.id, content="Main line valve closed. Welding team repairing the burst pipe.", status_update="In Progress"),
+        UpdateLog(issue_id=i10.id, user_id=dm_blr.id, content="Pipe welded successfully. Pavement cleaned up and road opened.", status_update="Resolved"),
+        # i11 logs
+        UpdateLog(issue_id=i11.id, user_id=u8.id, content="Footpath tiles issue reported.", status_update="Open"),
+        UpdateLog(issue_id=i11.id, user_id=dm_blr.id, content="Investigating department assessing repair costs.", status_update="Under Review"),
+        # i12 logs
+        UpdateLog(issue_id=i12.id, user_id=u5.id, content="Open manhole reported on main transit lane.", status_update="Open"),
+        # i14 logs
+        UpdateLog(issue_id=i14.id, user_id=u6.id, content="Stormwater open drain reported.", status_update="Open"),
+        # i15 logs
+        UpdateLog(issue_id=i15.id, user_id=u9.id, content="Baner Road dark stretch reported.", status_update="Open"),
+        UpdateLog(issue_id=i15.id, user_id=dm_pune.id, content="Electricity board replaced blown transformer fuse. All lights functioning.", status_update="Resolved"),
+        # i17 logs
+        UpdateLog(issue_id=i17.id, user_id=u9.id, content="River bank dump reported.", status_update="Open"),
+        UpdateLog(issue_id=i17.id, user_id=dm_pune.id, content="Solid waste management division scheduled clean-up drive.", status_update="In Progress"),
+        # i18 logs
+        UpdateLog(issue_id=i18.id, user_id=u7.id, content="Ring road bridge craters reported.", status_update="Open"),
+        UpdateLog(issue_id=i18.id, user_id=dm_ndls.id, content="Cold mix asphalt laid. Road surface restored completely.", status_update="Resolved"),
+        # i19 logs
+        UpdateLog(issue_id=i19.id, user_id=u7.id, content="Dwarka Metro water logging reported.", status_update="Open"),
+        UpdateLog(issue_id=i19.id, user_id=dm_ndls.id, content="Suction pump deployed to drain excess water. Long term drain overhaul scheduled.", status_update="In Progress")
+    ]
+    db.session.add_all(logs)
     db.session.commit()
 
 @app.cli.command("init-db")
@@ -1733,9 +2045,12 @@ def init_db():
 if not os.environ.get('TESTING'):
     with app.app_context():
         try:
-            # Schema verification check
+            # Schema verification check and new seed data detection
             User.query.filter(User.district == 'test').first()
             SentMail.query.first()
+            # Force recreate if our new seeded citizen 'citizen_priya' is missing to ensure database gets refreshed
+            if not User.query.filter_by(username='citizen_priya').first():
+                raise Exception("Outdated seed data detected. Refreshing database.")
         except Exception:
             db.session.rollback()
             db.drop_all()
