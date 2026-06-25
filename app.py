@@ -597,51 +597,50 @@ def leaderboard():
         else:
             state_query = current_user.state or 'Karnataka'
 
-    if state_query == 'All':
-        all_state_issues = Issue.query.all()
-    else:
-        all_state_issues = Issue.query.filter_by(state=state_query).all()
+    # Compute standings and absolute ranks on a GLOBAL scale first (to preserve absolute rank during filtering)
+    global_issues = Issue.query.all()
+    global_totals = {}
+    global_completed = {}
+    global_states = {}
 
-    district_totals = {}
-    district_completed = {}
-    district_states = {}
-
-    for issue in all_state_issues:
+    for issue in global_issues:
         d = issue.district or 'Unknown'
         s = issue.state or 'Unknown'
-        district_totals[d] = district_totals.get(d, 0) + 1
-        district_states[d] = s
+        global_totals[d] = global_totals.get(d, 0) + 1
+        global_states[d] = s
         if issue.govt_status == 'DONE':
-            district_completed[d] = district_completed.get(d, 0) + 1
+            global_completed[d] = global_completed.get(d, 0) + 1
             
-    # Also fetch district managers to include districts that might have no issues reported yet
-    if state_query == 'All':
-        managers_dist = db.session.query(User.district, User.state).filter_by(role='district_manager').distinct().all()
-        for row in managers_dist:
-            dist_name, state_name = row
-            if dist_name and dist_name not in district_totals:
-                district_totals[dist_name] = 0
-                district_states[dist_name] = state_name or 'Unknown'
-    else:
-        managers_dist = db.session.query(User.district).filter_by(state=state_query, role='district_manager').distinct().all()
-        for row in managers_dist:
-            dist_name = row[0]
-            if dist_name and dist_name not in district_totals:
-                district_totals[dist_name] = 0
-                district_states[dist_name] = state_query
+    # Include all district managers globally to capture inactive/new districts
+    managers_dist_all = db.session.query(User.district, User.state).filter_by(role='district_manager').distinct().all()
+    for row in managers_dist_all:
+        dist_name, state_name = row
+        if dist_name and dist_name not in global_totals:
+            global_totals[dist_name] = 0
+            global_states[dist_name] = state_name or 'Unknown'
             
-    district_standings = []
-    for d, total in district_totals.items():
-        completed = district_completed.get(d, 0)
+    global_standings = []
+    for d, total in global_totals.items():
+        completed = global_completed.get(d, 0)
         rate = (completed / total * 100) if total > 0 else 0
-        district_standings.append({
+        global_standings.append({
             'district': d,
-            'state': district_states.get(d, 'Unknown'),
+            'state': global_states.get(d, 'Unknown'),
             'total': total,
             'completed': completed,
             'rate': round(rate, 1)
         })
-    district_standings.sort(key=lambda x: x['rate'], reverse=True)
+    global_standings.sort(key=lambda x: x['rate'], reverse=True)
+    
+    # Assign absolute global ranks (1-indexed)
+    for idx, item in enumerate(global_standings):
+        item['global_rank'] = idx + 1
+
+    # Filter district standings based on the selected state query
+    if state_query == 'All':
+        district_standings = global_standings
+    else:
+        district_standings = [item for item in global_standings if item['state'] == state_query]
     
     # 3. Inter-State Leaderboard
     all_issues = Issue.query.all()
