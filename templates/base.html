@@ -93,6 +93,7 @@
         </nav>
     </header>
 
+    {% if request.endpoint not in ['login', 'register'] %}
     <div class="flash-container">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -105,6 +106,7 @@
             {% endif %}
         {% endwith %}
     </div>
+    {% endif %}
 
     <main>
         {% block content %}{% endblock %}

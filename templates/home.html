@@ -72,6 +72,7 @@
         padding: 1.5rem;
         border-radius: 16px;
         max-width: 380px;
+        min-height: 155px;
         backdrop-filter: blur(32px);
         -webkit-backdrop-filter: blur(32px);
         transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -189,7 +190,7 @@
                 {% if current_user.is_authenticated %}
                     <a href="{{ url_for('leaderboard') }}" class="glow-btn" style="background: linear-gradient(135deg, #129907, #22c55e); box-shadow: 0 4px 15px rgba(18, 153, 7, 0.4); padding: 0.85rem 2rem; font-size: 1rem;">View Leaderboard</a>
                 {% else %}
-                    <a href="{{ url_for('login') }}" class="glow-btn-outline" style="padding: 0.85rem 2rem; font-size: 1rem;">Sign In</a>
+                    <a href="{{ url_for('login') }}" class="glow-btn" style="background: linear-gradient(135deg, #129907, #22c55e); box-shadow: 0 4px 15px rgba(18, 153, 7, 0.4); padding: 0.85rem 2rem; font-size: 1rem;">Sign In</a>
                 {% endif %}
             </div>
         </div>

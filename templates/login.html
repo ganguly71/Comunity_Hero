@@ -3,13 +3,10 @@
 {% block title %}Login - Community Hero{% endblock %}
 
 {% block content %}
-<canvas id="particles-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -3; pointer-events: none;"></canvas>
+<canvas id="particles-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; pointer-events: none;"></canvas>
 
-<!-- Dark transparent backdrop overlay to dim particles background -->
-<div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: radial-gradient(circle at center, rgba(10, 14, 23, 0.5) 0%, rgba(4, 8, 16, 0.82) 100%); z-index: -2; pointer-events: none;"></div>
-
-<!-- Ashok Chakra Overlay (Watermarked and dimmed to 0.18 opacity) -->
-<div id="ashok-chakra-overlay" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(0deg); width: clamp(380px, 55vw, 520px); height: clamp(380px, 55vw, 520px); z-index: -2; pointer-events: none; opacity: 0.18; filter: drop-shadow(0 -12px 25px rgba(255, 119, 0, 0.45)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.3)) drop-shadow(0 12px 25px rgba(18, 153, 7, 0.45)); transition: opacity 0.5s ease;">
+<!-- Ashok Chakra Overlay -->
+<div id="ashok-chakra-overlay" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(0deg); width: clamp(380px, 55vw, 520px); height: clamp(380px, 55vw, 520px); z-index: -1; pointer-events: none; opacity: 0.95; filter: drop-shadow(0 -12px 25px rgba(255, 119, 0, 0.65)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.45)) drop-shadow(0 12px 25px rgba(18, 153, 7, 0.65)); transition: opacity 0.5s ease;">
     <svg id="chakra-svg" viewBox="0 0 200 200" width="100%" height="100%">
         <!-- Solid background circle to prevent transparency -->
         <circle cx="100" cy="100" r="90" fill="#ffffff" />
@@ -20,31 +17,6 @@
     </svg>
 </div>
 
-<!-- Left Decorative Side Art (Orange Theme) -->
-<div class="side-decor left-decor" style="position: fixed; left: 8%; top: 50%; transform: translateY(-50%); z-index: -1; opacity: 0.22; filter: drop-shadow(0 0 25px rgba(255, 119, 0, 0.3)); pointer-events: none;">
-    <svg width="190" height="190" viewBox="0 0 24 24" fill="none" stroke="#FF7700" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M2 22h20M3 22V10h3v12M6 22V4h5v12m0 6V7h4v15m0 0V9h4v13M19 22V13h2v9"/>
-    </svg>
-    <div style="color: #FF7700; font-family: var(--font-heading); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-top: 1rem; text-align: center;">Build the Nation</div>
-</div>
-
-<!-- Right Decorative Side Art (Green Theme) -->
-<div class="side-decor right-decor" style="position: fixed; right: 8%; top: 50%; transform: translateY(-50%); z-index: -1; opacity: 0.22; filter: drop-shadow(0 0 25px rgba(18, 153, 7, 0.3)); pointer-events: none;">
-    <svg width="190" height="190" viewBox="0 0 24 24" fill="none" stroke="#129907" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        <path d="M9 11l2 2 4-4"/>
-    </svg>
-    <div style="color: #129907; font-family: var(--font-heading); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-top: 1rem; text-align: center;">Fix Your City</div>
-</div>
-
-<style>
-    @media (max-width: 1024px) {
-        .side-decor {
-            display: none !important;
-        }
-    }
-</style>
-
 
 <div class="auth-wrapper" style="min-height: 80vh; display: flex; align-items: center; justify-content: center; margin: 0 auto; padding: 2rem 1rem;">
     <div class="glass card-entrance" style="background: rgba(18,26,43,0.6); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(0,242,254,0.2); border-radius: 24px; box-shadow: 0 0 60px rgba(0,242,254,0.05); padding: 3rem 2rem; max-width: 440px; width: 100%; opacity: 0; transform: translateY(30px); animation: slideUpFade 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;">
@@ -52,7 +24,19 @@
             <h1 style="font-family: var(--font-heading); font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; text-shadow: 0 0 20px rgba(0, 242, 254, 0.15);">Welcome Back</h1>
             <p style="color: var(--text-muted); font-size: 0.9rem;">Sign in to resolve hyperlocal problems.</p>
         </div>
-        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="local-flash-container" style="margin-bottom: 1.5rem;">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}" style="margin-bottom: 0.75rem; padding: 0.75rem 1rem; border-radius: 12px; font-size: 0.85rem; backdrop-filter: blur(8px); display: flex; justify-content: space-between; align-items: center; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;">
+                            <span>{{ message }}</span>
+                            <button type="button" class="close-btn" onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; font-size: 1.15rem; cursor: pointer; line-height: 1; padding: 0 0 0 10px;">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
         <form method="POST" id="login-form" onsubmit="handleAuthSubmit(event, 'Signing in...')">
             <div class="form-group">
                 <label for="username" style="color: var(--text-muted); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; display: block;">Username</label>
