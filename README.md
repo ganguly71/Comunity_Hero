@@ -1,4 +1,9 @@
+<p align="center">
+  <img src="https://i.ibb.co/MDFM8W7B/logo.png" alt="Community Hero Logo" width="120px">
+</p>
+
 # 🇮🇳 Community Hero - Hyperlocal Civic Resolution Platform
+
 
 **Community Hero** is a modern, high-aesthetic web application designed to empower citizens and digitize local civic grievance management. By bridging the gap between local residents and municipal administration, the platform allows communities to flag, track, and solve infrastructure issues transparently.
 
