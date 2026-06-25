@@ -169,36 +169,27 @@ window.initParticles = function(canvasId) {
             const sinA = Math.sin(angle);
             
             // Perpendicular vector for spoke width offsets
-            const cosPerp = -sinA;
-            const sinPerp = cosA;
+            const cosPerp = Math.cos(angle + Math.PI / 2);
+            const sinPerp = Math.sin(angle + Math.PI / 2);
 
-            // Spoke geometry calculations (Center at 100, 100)
-            // Inner connection at r=17.5 (width = 1.6px)
-            const rInner = 17.5;
-            const wInner = 0.8;
-            const hx1 = 100 + rInner * cosA + wInner * cosPerp;
-            const hy1 = 100 + rInner * sinA + wInner * sinPerp;
-            const hx2 = 100 + rInner * cosA - wInner * cosPerp;
-            const hy2 = 100 + rInner * sinA - wInner * sinPerp;
+            // 1. Spindle Spoke base at the hub (narrow connection)
+            const hx1 = 100 + 14 * cosA + 0.8 * cosPerp;
+            const hy1 = 100 + 14 * sinA + 0.8 * sinPerp;
+            const hx2 = 100 + 14 * cosA - 0.8 * cosPerp;
+            const hy2 = 100 + 14 * sinA - 0.8 * sinPerp;
 
-            // Bulge at r=32 (width = 4.2px)
-            const rBulge = 32;
-            const wBulge = 2.1;
-            const bx1 = 100 + rBulge * cosA + wBulge * cosPerp;
-            const by1 = 100 + rBulge * sinA + wBulge * sinPerp;
-            const bx2 = 100 + rBulge * cosA - wBulge * cosPerp;
-            const by2 = 100 + rBulge * sinA - wBulge * sinPerp;
+            // 2. Spindle Spoke widest midpoint (diamond swell in the middle)
+            const mx1 = 100 + 44 * cosA + 3.2 * cosPerp;
+            const my1 = 100 + 44 * sinA + 3.2 * sinPerp;
+            const mx2 = 100 + 44 * cosA - 3.2 * cosPerp;
+            const my2 = 100 + 44 * sinA - 3.2 * sinPerp;
 
-            // Outer tip at r=84 (width = 0.6px)
-            const rOuter = 84;
-            const wOuter = 0.3;
-            const tx1 = 100 + rOuter * cosA + wOuter * cosPerp;
-            const ty1 = 100 + rOuter * sinA + wOuter * sinPerp;
-            const tx2 = 100 + rOuter * cosA - wOuter * cosPerp;
-            const ty2 = 100 + rOuter * sinA - wOuter * sinPerp;
+            // 3. Spindle Spoke tapering to tip at outer circle
+            const tx = 100 + 82 * cosA;
+            const ty = 100 + 82 * sinA;
 
-            // Accurate Spindle spoke path using quadratic bezier curves
-            const pathData = `M ${hx1} ${hy1} Q ${bx1} ${by1}, ${tx1} ${ty1} L ${tx2} ${ty2} Q ${bx2} ${by2}, ${hx2} ${hy2} Z`;
+            // Accurate Spindle spoke SVG path: Hub Base -> Mid Wide -> Tip -> Mid Wide -> Hub Base
+            const pathData = `M ${hx1} ${hy1} L ${mx1} ${my1} L ${tx} ${ty} L ${mx2} ${my2} L ${hx2} ${hy2} Z`;
 
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.setAttribute('class', 'dynamic-spoke');
@@ -206,17 +197,16 @@ window.initParticles = function(canvasId) {
             path.setAttribute('fill', '#000080'); // Navy blue
             svg.appendChild(path);
 
-            // Semicircular scallop (arch) pointing inward
-            // Center is placed at the mid-angle between spokes, at r=84
-            const midAngle = angle + (Math.PI / 24);
-            const cx = 100 + 84 * Math.cos(midAngle);
-            const cy = 100 + 84 * Math.sin(midAngle);
+            // Circular nodes (bumps) on outer rim between spokes
+            const dotAngle = angle + (Math.PI / 24);
+            const cx = 100 + 82.5 * Math.cos(dotAngle);
+            const cy = 100 + 82.5 * Math.sin(dotAngle);
 
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             circle.setAttribute('class', 'dynamic-spoke');
             circle.setAttribute('cx', cx);
             circle.setAttribute('cy', cy);
-            circle.setAttribute('r', '6.0'); // Radius 6.0 creates a beautiful arch
+            circle.setAttribute('r', '4.0'); // Semi-circular bump size
             circle.setAttribute('fill', '#000080');
             svg.appendChild(circle);
         }
