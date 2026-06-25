@@ -306,8 +306,9 @@
     
     <div style="max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
         <!-- Left side: brand -->
-        <a href="/" style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; background: linear-gradient(90deg, #FF7700, #FFFFFF, #129907); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none;">
-            Community Hero
+        <a href="/" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Community Hero Logo" style="height: 28px; width: auto; border-radius: 4px;">
+            <span style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; background: linear-gradient(90deg, #FF7700, #FFFFFF, #129907); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Community Hero</span>
         </a>
         
         <!-- Middle: Credits -->

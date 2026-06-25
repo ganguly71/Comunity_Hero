@@ -15,8 +15,9 @@
 
     <header>
         <nav class="navbar">
-            <a href="{{ url_for('home') }}" class="logo">
-                Community<span>Hero</span>
+            <a href="{{ url_for('home') }}" class="logo" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none;">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Community Hero Logo" style="height: 38px; width: auto; border-radius: 6px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);">
+                <span style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800; background: linear-gradient(90deg, #FF7700 0%, #FFFFFF 50%, #129907 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Community<span>Hero</span></span>
             </a>
             
             {% if current_user.is_authenticated %}
