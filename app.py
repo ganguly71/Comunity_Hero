@@ -996,16 +996,29 @@ def govt_update_issue(issue_id):
         subject = f"Update on your reported issue: {issue.title}"
         html_content = f"""
         <html>
-            <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-                <h2 style="color: #00f2fe; margin-bottom: 20px;">Community Hero Update</h2>
-                <p>Hello <strong>{reporter.username}</strong>,</p>
-                <p>The status of your reported issue <strong>"{issue.title}"</strong> has been updated by the District Manager.</p>
-                <div style="background-color: #f9f9f9; border-left: 4px solid #00f2fe; padding: 15px; margin: 20px 0;">
-                    <p style="margin: 0 0 10px 0;"><strong>New Government Status:</strong> <span style="background-color: #e0f7fa; color: #006064; padding: 3px 8px; border-radius: 4px; font-weight: bold;">{govt_status}</span></p>
-                    <p style="margin: 0;"><strong>Manager Notes:</strong> {content}</p>
+            <body>
+                <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 30px 15px; margin: 0; min-height: 100%;">
+                    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 25px; text-align: center; border-bottom: 3px solid #00f2fe;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 1.5rem; letter-spacing: 1px; font-weight: 700;">COMMUNITY HERO</h1>
+                        </div>
+                        <div style="padding: 30px 25px; color: #334155; line-height: 1.6; font-size: 1rem;">
+                            <p style="margin-top: 0;">Hello <strong>{reporter.username}</strong>,</p>
+                            <p>An update has been logged regarding the civic issue you reported: <strong style="color: #0f172a;">"{issue.title}"</strong>.</p>
+                            
+                            <div style="background-color: #f8fafc; border-left: 4px solid #00f2fe; padding: 20px; border-radius: 6px; margin: 25px 0; border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+                                <p style="margin: 0 0 12px 0;"><strong>Status:</strong> <span style="background-color: #e0f7fa; color: #006064; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;">{govt_status}</span></p>
+                                <p style="margin: 0; color: #475569;"><strong>Official Log Notes:</strong><br/>{content}</p>
+                            </div>
+                            
+                            <p style="margin-bottom: 0;">Thank you for your active participation in improving our neighborhood's safety and environment!</p>
+                        </div>
+                        <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid #e2e8f0;">
+                            <p style="margin: 0 0 5px 0; font-weight: 600;">Community Hero Initiative</p>
+                            <p style="margin: 0;">This is an automated operational notification. Please do not reply directly to this mail address.</p>
+                        </div>
+                    </div>
                 </div>
-                <p>Thank you for contributing to keeping your neighborhood clean and safe!</p>
-                <p style="font-size: 0.8em; color: #777; margin-top: 30px;">This is an automated notification from Community Hero. Please do not reply directly to this email.</p>
             </body>
         </html>
         """
@@ -1082,16 +1095,29 @@ def contact_reporter(issue_id):
     # Build secure email HTML content for reporter
     html_content = f"""
     <html>
-        <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-            <h2 style="color: #00f2fe; margin-bottom: 20px;">Message from District Manager ({current_user.username})</h2>
-            <p>Hello <strong>{reporter.username}</strong>,</p>
-            <p>A manager has contacted you regarding your reported issue: <strong>"{issue.title}"</strong>.</p>
-            <div style="background-color: #f9f9f9; border-left: 4px solid #00f2fe; padding: 15px; margin: 20px 0; white-space: pre-wrap;">
-                <strong>Message:</strong><br/>
-                {body}
+        <body>
+            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 30px 15px; margin: 0; min-height: 100%;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 25px; text-align: center; border-bottom: 3px solid #00f2fe;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 1.5rem; letter-spacing: 1px; font-weight: 700;">COMMUNITY HERO</h1>
+                    </div>
+                    <div style="padding: 30px 25px; color: #334155; line-height: 1.6; font-size: 1rem;">
+                        <p style="margin-top: 0;">Hello <strong>{reporter.username}</strong>,</p>
+                        <p>An official message has been sent to you by your District Manager (<strong>{current_user.username}</strong>) regarding your reported issue: <strong style="color: #0f172a;">"{issue.title}"</strong>.</p>
+                        
+                        <div style="background-color: #f8fafc; border-left: 4px solid #00f2fe; padding: 20px; border-radius: 6px; margin: 25px 0; border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; white-space: pre-wrap;">
+                            <strong style="color: #0f172a; display: block; margin-bottom: 8px;">Message:</strong>
+                            {body}
+                        </div>
+                        
+                        <p style="margin-bottom: 0;">You can reply directly to this email to communicate back with the manager securely.</p>
+                    </div>
+                    <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid #e2e8f0;">
+                        <p style="margin: 0 0 5px 0; font-weight: 600;">Community Hero Secure Communications Hub</p>
+                        <p style="margin: 0;">Replies to this email will be forwarded directly to the manager's registered inbox.</p>
+                    </div>
+                </div>
             </div>
-            <p>You can reply directly to this email to contact the manager back.</p>
-            <p style="font-size: 0.8em; color: #777; margin-top: 30px;">Sent via Community Hero Secure Communications.</p>
         </body>
     </html>
     """
@@ -1112,15 +1138,29 @@ def contact_reporter(issue_id):
     # Build CC copy for manager
     html_content_cc = f"""
     <html>
-        <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-            <h2 style="color: #00f2fe; margin-bottom: 20px;">Sent Message Copy (Community Hero)</h2>
-            <p>This is a copy of the message you sent to reporter <strong>{reporter.username}</strong> regarding issue: <strong>"{issue.title}"</strong>.</p>
-            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;"/>
-            <p><strong>Subject:</strong> {subject}</p>
-            <div style="background-color: #f9f9f9; border-left: 4px solid #ccc; padding: 15px; margin: 20px 0; white-space: pre-wrap;">
-                {body}
+        <body>
+            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 30px 15px; margin: 0; min-height: 100%;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 25px; text-align: center; border-bottom: 3px solid #00f2fe;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 1.5rem; letter-spacing: 1px; font-weight: 700;">COMMUNITY HERO</h1>
+                    </div>
+                    <div style="padding: 30px 25px; color: #334155; line-height: 1.6; font-size: 1rem;">
+                        <p style="margin-top: 0;">Hello Manager <strong>{current_user.username}</strong>,</p>
+                        <p>This is a confirmation copy of the message you securely sent to reporter <strong>{reporter.username}</strong> regarding issue: <strong style="color: #0f172a;">"{issue.title}"</strong>.</p>
+                        
+                        <div style="background-color: #f8fafc; border-left: 4px solid #cbd5e1; padding: 20px; border-radius: 6px; margin: 25px 0; border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; white-space: pre-wrap;">
+                            <strong style="color: #0f172a; display: block; margin-bottom: 8px;">Subject: {subject}</strong>
+                            {body}
+                        </div>
+                        
+                        <p style="margin-bottom: 0; font-size: 0.9rem; color: #64748b;">* Note: A permanent record of this message has been archived in the secure log ledger. It can only be deleted by an Administrator.</p>
+                    </div>
+                    <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid #e2e8f0;">
+                        <p style="margin: 0 0 5px 0; font-weight: 600;">Community Hero Manager Portal</p>
+                        <p style="margin: 0;">This email is sent for reference and audit compliance.</p>
+                    </div>
+                </div>
             </div>
-            <p style="font-size: 0.8em; color: #777;">This email log is stored in the database and cannot be deleted by managers.</p>
         </body>
     </html>
     """
@@ -1220,10 +1260,10 @@ def check_reminders():
             reason_str = ", ".join(reasons)
             
             issues_html += f"""
-            <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 10px;"><strong>#{issue.id} - {issue.title}</strong><br/><span style="color: #777; font-size: 0.9em;">{issue.category}</span></td>
-                <td style="padding: 10px; color: #d32f2f; font-weight: bold;">{reason_str}</td>
-                <td style="padding: 10px;">{issue.created_at.strftime('%Y-%m-%d')}</td>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 12px 10px; color: #0f172a;"><strong>#{issue.id} - {issue.title}</strong><br/><span style="color: #64748b; font-size: 0.8rem;">{issue.category}</span></td>
+                <td style="padding: 12px 10px; color: #ef4444; font-weight: bold; font-size: 0.85rem;">{reason_str}</td>
+                <td style="padding: 12px 10px; color: #64748b; font-size: 0.85rem; white-space: nowrap;">{issue.created_at.strftime('%Y-%m-%d')}</td>
             </tr>
             """
             
@@ -1231,23 +1271,39 @@ def check_reminders():
         for manager in managers:
             html_content = f"""
             <html>
-                <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-                    <h2 style="color: #e53935; margin-bottom: 20px;">High Priority Issue Digest</h2>
-                    <p>Hello Manager <strong>{manager.username}</strong>,</p>
-                    <p>The following issues in your district <strong>{district}, {state}</strong> require immediate attention:</p>
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-                        <thead>
-                            <tr style="background-color: #f5f5f5; border-bottom: 2px solid #ccc; text-align: left;">
-                                <th style="padding: 10px;">Issue</th>
-                                <th style="padding: 10px;">Flag Reason</th>
-                                <th style="padding: 10px;">Reported Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {issues_html}
-                        </tbody>
-                    </table>
-                    <p style="margin-top: 30px;">Please log in to the <a href="{os.environ.get('WEB_LINK_GCP', '#')}">Community Hero Dashboard</a> to update these issues.</p>
+                <body>
+                    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 30px 15px; margin: 0; min-height: 100%;">
+                        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                            <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 25px; text-align: center; border-bottom: 3px solid #ef4444;">
+                                <h1 style="color: #ffffff; margin: 0; font-size: 1.5rem; letter-spacing: 1px; font-weight: 700;">PRIORITY ISSUES DIGEST</h1>
+                            </div>
+                            <div style="padding: 30px 25px; color: #334155; line-height: 1.6; font-size: 1rem;">
+                                <p style="margin-top: 0;">Hello Manager <strong>{manager.username}</strong>,</p>
+                                <p>The following reported issues in your district <strong style="color: #0f172a;">{district}, {state}</strong> have reached a priority threshold and require immediate attention:</p>
+                                
+                                <div style="margin: 25px 0; overflow-x: auto;">
+                                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                                        <thead>
+                                            <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569;">
+                                                <th style="padding: 12px 10px; font-weight: 600;">Issue Info</th>
+                                                <th style="padding: 12px 10px; font-weight: 600;">Priority Flag</th>
+                                                <th style="padding: 12px 10px; font-weight: 600;">Reported Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {issues_html}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <p style="margin-bottom: 0;">Please log into the <a href="{os.environ.get('WEB_LINK_GCP', '#')}" style="color: #00f2fe; text-decoration: underline; font-weight: 600;">Community Hero Management Dashboard</a> to inspect and update these reports.</p>
+                            </div>
+                            <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid #e2e8f0;">
+                                <p style="margin: 0 0 5px 0; font-weight: 600;">Community Hero Escalation System</p>
+                                <p style="margin: 0;">This operational digest is auto-generated based on issue resolution times and public vote thresholds.</p>
+                            </div>
+                        </div>
+                    </div>
                 </body>
             </html>
             """
