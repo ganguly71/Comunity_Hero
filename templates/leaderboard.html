@@ -70,9 +70,26 @@
 
     <!-- Tab 2: District Standings -->
     <div id="tab-districts" class="glass-card animate-in" style="display: none;">
-        <div class="glass-card-header">
-            <h2>District Completion Rates</h2>
-            <span class="badge badge-resolved">{{ selected_state }} State</span>
+        <div class="glass-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h2 style="margin: 0;">District Completion Rates</h2>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">
+                    {% if selected_state == 'All' %}
+                        Showing all districts across India
+                    {% else %}
+                        Showing districts in {{ selected_state }}
+                    {% endif %}
+                </p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label for="state-filter" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; white-space: nowrap;">Filter State:</label>
+                <select id="state-filter" onchange="filterLeaderboardByState(this.value)" class="glass-input" style="padding: 0.35rem 1rem; border-radius: 20px; font-size: 0.8rem; height: 32px; width: auto; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: var(--text-main); cursor: pointer;">
+                    <option value="All" {% if selected_state == 'All' %}selected{% endif %}>All States</option>
+                    {% for st in unique_states %}
+                        <option value="{{ st }}" {% if selected_state == st %}selected{% endif %}>{{ st }}</option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
         
         <div class="leaderboard-list stagger-children" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
@@ -82,7 +99,12 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                             <div style="display: flex; align-items: center; gap: 1rem;">
                                 <span style="font-weight: 800; color: var(--primary); font-size: 1.15rem; width: 30px;">#{{ loop.index }}</span>
-                                <span style="color: var(--text-main); font-weight: 600; font-family: var(--font-heading); font-size: 1.1rem;">{{ d.district }}</span>
+                                <span style="color: var(--text-main); font-weight: 600; font-family: var(--font-heading); font-size: 1.1rem;">
+                                    {{ d.district }}
+                                    {% if selected_state == 'All' %}
+                                        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 0.3rem;">({{ d.state }})</span>
+                                    {% endif %}
+                                </span>
                             </div>
                             <div style="text-align: right;">
                                 <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.15rem;">{{ d.completed }}/{{ d.total }} Completed</span>
@@ -95,7 +117,7 @@
                     </div>
                 {% endfor %}
             {% else %}
-                <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No district reports registered in {{ selected_state }}.</p>
+                <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No district reports registered.</p>
             {% endif %}
         </div>
     </div>
@@ -187,28 +209,31 @@
         }
     }
 
+    function filterLeaderboardByState(state) {
+        window.location.href = `/leaderboard?state=${encodeURIComponent(state)}#districts`;
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-        // Set initial underline position
-        const activeBtn = document.querySelector('.tab-link.active');
-        if (activeBtn) {
-            const underline = document.getElementById('tab-underline');
-            underline.style.width = activeBtn.offsetWidth + 'px';
-            underline.style.left = activeBtn.offsetLeft + 'px';
+        // Determine initial active tab based on hash or state query parameter
+        let initialTab = 'citizens';
+        if (window.location.hash === '#districts' || window.location.search.includes('state=')) {
+            initialTab = 'districts';
+        } else if (window.location.hash === '#states') {
+            initialTab = 'states';
         }
 
-        // Trigger initial citizen list staggered animations
-        const activeTabContent = document.getElementById('tab-citizens');
-        if (activeTabContent) {
-            const rows = activeTabContent.querySelectorAll('.leaderboard-row');
-            rows.forEach((row, i) => {
-                row.style.opacity = '0';
-                row.style.transform = 'translateY(15px)';
-                setTimeout(() => {
-                    row.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-                    row.style.opacity = '1';
-                    row.style.transform = 'translateY(0)';
-                }, 50 * i);
-            });
+        // Find corresponding button and trigger click/switch
+        const initialBtn = document.querySelector(`.tab-link[data-tab="${initialTab}"]`);
+        if (initialBtn) {
+            switchLeaderboardTab(initialBtn, initialTab);
+        } else {
+            // Fallback default positioning
+            const activeBtn = document.querySelector('.tab-link.active');
+            if (activeBtn) {
+                const underline = document.getElementById('tab-underline');
+                underline.style.width = activeBtn.offsetWidth + 'px';
+                underline.style.left = activeBtn.offsetLeft + 'px';
+            }
         }
     });
 </script>

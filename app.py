@@ -580,22 +580,55 @@ def leaderboard():
     # 1. Top citizens
     users = User.query.filter_by(role='citizen').order_by(User.points.desc()).limit(10).all()
     
+    # Fetch all unique states to populate the filter dropdown
+    unique_states_query = db.session.query(User.state).filter(User.state != None, User.state != '').distinct().all()
+    unique_states = [r[0] for r in unique_states_query]
+    # Ensure standard states are listed if they exist or as seed references
+    for default_state in ['Karnataka', 'Maharashtra', 'Delhi']:
+        if default_state not in unique_states:
+            unique_states.append(default_state)
+    unique_states.sort()
+
     # 2. State Districts Performance Leaderboard
-    state_query = current_user.state or 'Karnataka'
-    all_state_issues = Issue.query.filter_by(state=state_query).all()
+    state_query = request.args.get('state')
+    if not state_query:
+        if current_user.role == 'admin':
+            state_query = 'All'
+        else:
+            state_query = current_user.state or 'Karnataka'
+
+    if state_query == 'All':
+        all_state_issues = Issue.query.all()
+    else:
+        all_state_issues = Issue.query.filter_by(state=state_query).all()
+
     district_totals = {}
     district_completed = {}
+    district_states = {}
+
     for issue in all_state_issues:
         d = issue.district or 'Unknown'
+        s = issue.state or 'Unknown'
         district_totals[d] = district_totals.get(d, 0) + 1
+        district_states[d] = s
         if issue.govt_status == 'DONE':
             district_completed[d] = district_completed.get(d, 0) + 1
             
     # Also fetch district managers to include districts that might have no issues reported yet
-    managers_dist = db.session.query(User.district).filter_by(state=state_query, role='district_manager').distinct().all()
-    for row in managers_dist:
-        if row[0] and row[0] not in district_totals:
-            district_totals[row[0]] = 0
+    if state_query == 'All':
+        managers_dist = db.session.query(User.district, User.state).filter_by(role='district_manager').distinct().all()
+        for row in managers_dist:
+            dist_name, state_name = row
+            if dist_name and dist_name not in district_totals:
+                district_totals[dist_name] = 0
+                district_states[dist_name] = state_name or 'Unknown'
+    else:
+        managers_dist = db.session.query(User.district).filter_by(state=state_query, role='district_manager').distinct().all()
+        for row in managers_dist:
+            dist_name = row[0]
+            if dist_name and dist_name not in district_totals:
+                district_totals[dist_name] = 0
+                district_states[dist_name] = state_query
             
     district_standings = []
     for d, total in district_totals.items():
@@ -603,6 +636,7 @@ def leaderboard():
         rate = (completed / total * 100) if total > 0 else 0
         district_standings.append({
             'district': d,
+            'state': district_states.get(d, 'Unknown'),
             'total': total,
             'completed': completed,
             'rate': round(rate, 1)
@@ -641,7 +675,8 @@ def leaderboard():
                            users=users,
                            district_standings=district_standings,
                            state_standings=state_standings,
-                           selected_state=state_query)
+                           selected_state=state_query,
+                           unique_states=unique_states)
 
 @app.route('/stats')
 @login_required
