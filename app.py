@@ -608,7 +608,7 @@ def leaderboard():
         s = issue.state or 'Unknown'
         global_totals[d] = global_totals.get(d, 0) + 1
         global_states[d] = s
-        if issue.govt_status == 'DONE':
+        if issue.govt_status == 'DONE' or issue.status == 'Resolved':
             global_completed[d] = global_completed.get(d, 0) + 1
             
     # Include all district managers globally to capture inactive/new districts
@@ -649,7 +649,7 @@ def leaderboard():
     for issue in all_issues:
         s = issue.state or 'Unknown'
         state_totals[s] = state_totals.get(s, 0) + 1
-        if issue.govt_status == 'DONE':
+        if issue.govt_status == 'DONE' or issue.status == 'Resolved':
             state_completed[s] = state_completed.get(s, 0) + 1
             
     # Include users' states
