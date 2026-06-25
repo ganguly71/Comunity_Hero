@@ -361,6 +361,69 @@ def register():
         db.session.add(user)
         db.session.commit()
         
+        # Send professional onboarding email
+        subject = "Welcome to Community Hero!"
+        html_content = f"""
+        <html>
+            <body>
+                <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 30px 15px; margin: 0; min-height: 100%;">
+                    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 25px; text-align: center; border-bottom: 3px solid #00f2fe;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 1.5rem; letter-spacing: 1px; font-weight: 700;">WELCOME TO COMMUNITY HERO</h1>
+                        </div>
+                        <div style="padding: 30px 25px; color: #334155; line-height: 1.6; font-size: 1rem;">
+                            <p style="margin-top: 0;">Hello <strong>{username}</strong>,</p>
+                            <p>Thank you for joining the <strong>Community Hero</strong> initiative! Your account has been registered successfully.</p>
+                            
+                            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                                <h3 style="margin-top: 0; color: #0f172a; font-size: 0.95rem;">Registered Jurisdictional Details:</h3>
+                                <ul style="margin: 0; padding-left: 20px; color: #475569; font-size: 0.9rem;">
+                                    <li><strong>State:</strong> {state}</li>
+                                    <li><strong>District:</strong> {district}</li>
+                                    <li><strong>Registered Address:</strong> {address}</li>
+                                </ul>
+                            </div>
+
+                            <h3 style="color: #0f172a; font-size: 1.05rem; margin-top: 25px; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">How to Earn Points & Climb the Leaderboard</h3>
+                            <p>Every contribution counts! Here is how you can earn civic status points:</p>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 15px 0;">
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 8px 0; color: #0f172a; font-weight: 600;">Sign Up Bonus</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #00875a; font-weight: bold;">+50 Points</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 8px 0; color: #0f172a; font-weight: 600;">Reporting a Local Issue</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #00875a; font-weight: bold;">+15 Points</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 8px 0; color: #0f172a; font-weight: 600;">Upvoting/Downvoting an Issue</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #00875a; font-weight: bold;">+5 Points</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 8px 0; color: #0f172a; font-weight: 600;">Commenting on an Issue</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #00875a; font-weight: bold;">+2 Points</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 8px 0; color: #0f172a; font-weight: 600;">Successful Gov't Issue Resolution</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #00875a; font-weight: bold;">+50 Points</td>
+                                </tr>
+                            </table>
+
+                            <p style="margin-top: 25px; margin-bottom: 0; text-align: center;">
+                                <a href="{os.environ.get('WEB_LINK_GCP', '#')}" style="background-color: #0f172a; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.15);">Get Started - View Map</a>
+                            </p>
+                        </div>
+                        <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid #e2e8f0;">
+                            <p style="margin: 0 0 5px 0; font-weight: 600;">Community Hero Initiative</p>
+                            <p style="margin: 0;">This operational email was sent to confirm your civic registration.</p>
+                        </div>
+                    </div>
+                </div>
+            </body>
+        </html>
+        """
+        send_brevo_email(email, username, subject, html_content)
+        
         login_user(user)
         flash(f'Account created! Home resolved to: {district}, {state}. (+50 Pts)', 'success')
         return redirect(url_for('index'))
