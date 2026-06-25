@@ -275,8 +275,13 @@ def register():
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
         address = request.form.get('address')
         
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return render_template('register.html')
+            
         if not address or len(address.strip()) == 0:
             flash('Home address is required.', 'error')
             return render_template('register.html')
@@ -320,6 +325,57 @@ def logout():
     logout_user()
     flash('Logged out successfully.', 'info')
     return redirect(url_for('login'))
+
+@app.route('/update_profile', methods=['POST'])
+@login_required
+def update_profile():
+    if current_user.role != 'citizen':
+        flash('Only citizens can update their profile here.', 'error')
+        return redirect(url_for('dashboard'))
+
+    email = request.form.get('email')
+    address = request.form.get('address')
+    
+    updated = False
+    
+    if email and email != current_user.email:
+        if current_user.email_updated_at:
+            days_since_update = (datetime.utcnow() - current_user.email_updated_at).days
+            if days_since_update < 30:
+                flash(f'Email can only be updated once a month. Try again in {30 - days_since_update} days.', 'error')
+                return redirect(url_for('dashboard'))
+                
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered by another user.', 'error')
+            return redirect(url_for('dashboard'))
+            
+        current_user.email = email
+        current_user.email_updated_at = datetime.utcnow()
+        updated = True
+        
+    if address and address != current_user.address:
+        if current_user.address_updated_at:
+            days_since_update = (datetime.utcnow() - current_user.address_updated_at).days
+            if days_since_update < 30:
+                flash(f'Address can only be updated once a month. Try again in {30 - days_since_update} days.', 'error')
+                return redirect(url_for('dashboard'))
+                
+        current_user.address = address
+        lat, lon, district, state = geocode_address(address)
+        current_user.latitude = lat
+        current_user.longitude = lon
+        current_user.district = district
+        current_user.state = state
+        current_user.address_updated_at = datetime.utcnow()
+        updated = True
+        
+    if updated:
+        db.session.commit()
+        flash('Profile updated successfully!', 'success')
+    else:
+        flash('No changes were made to your profile.', 'info')
+        
+    return redirect(url_for('dashboard'))
 
 @app.route('/dashboard')
 @login_required
@@ -793,30 +849,22 @@ def vote_issue(issue_id):
         if existing_vote.vote_type == vote_type:
             # Retract vote
             db.session.delete(existing_vote)
-            if vote_type == 'upvote':
-                reporter.points = max(0, reporter.points - 5)
-            else:
-                reporter.points += 2
+            # Both upvote and downvote award +5, so retracting either removes 5 points.
+            reporter.points = max(0, reporter.points - 5)
             db.session.commit()
             return jsonify({'success': True, 'action': 'retracted', 'score': issue.vote_score})
         else:
             # Switch vote
             existing_vote.vote_type = vote_type
-            if vote_type == 'upvote':
-                reporter.points += 7
-            else:
-                reporter.points = max(0, reporter.points - 7)
+            # Since both upvote and downvote award +5, switching between them leaves reporter points unchanged.
             db.session.commit()
             return jsonify({'success': True, 'action': 'switched', 'score': issue.vote_score})
     else:
         # New vote
         new_vote = Vote(issue_id=issue_id, user_id=current_user.id, vote_type=vote_type)
         db.session.add(new_vote)
-        if vote_type == 'upvote':
-            reporter.points += 5
-        else:
-            reporter.points = max(0, reporter.points - 2)
-            
+        # Both upvote and downvote award +5 points to the reporter
+        reporter.points += 5
         db.session.commit()
         return jsonify({'success': True, 'action': 'voted', 'score': issue.vote_score})
 

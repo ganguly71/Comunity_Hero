@@ -20,6 +20,8 @@ class User(db.Model, UserMixin):
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
     created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    email_updated_at = db.Column(db.DateTime, nullable=True)
+    address_updated_at = db.Column(db.DateTime, nullable=True)
     
     # Relationships
     issues = db.relationship('Issue', backref='reporter', lazy=True)

@@ -28,63 +28,103 @@ window.initParticles = function(canvasId) {
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // Denser Particle Grid (Ultra-dense: 90x90 = 8100 particles)
-    const sizeX = 90;
-    const sizeY = 90;
-    const spacing = 6.2; // Compact spacing for high density
+    // Create dynamically a canvas texture for soft, glowing round particles
+    function createGlowTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+
+        const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        gradient.addColorStop(0.35, 'rgba(255, 255, 255, 1)');
+        gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.5)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 64, 64);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        return texture;
+    }
+
+    // Denser Particle Grid (Ultra-dense: 140x140 = 19600 particles)
+    const sizeX = 140;
+    const sizeY = 140;
 
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(sizeX * sizeY * 3);
     const colors = new Float32Array(sizeX * sizeY * 3);
 
-    let index = 0;
+    // Calculate grid coordinates to perfectly cover the visible camera bounds at Z = 0
+    function updateGridPositions() {
+        const fovRad = (camera.fov * Math.PI) / 180;
+        // Visible height at z = 0
+        const visibleHeight = 2 * Math.tan(fovRad / 2) * camera.position.z;
+        // Visible width at z = 0
+        const visibleWidth = visibleHeight * camera.aspect;
+
+        const posAttr = geometry.attributes.position;
+        let idx = 0;
+        for (let ix = 0; ix < sizeX; ix++) {
+            for (let iy = 0; iy < sizeY; iy++) {
+                // Map to normalized range [-0.5, 0.5] and scale to visible width/height
+                // Add minor margins (1.05) to avoid edge clipping during waving
+                const x = (ix / (sizeX - 1) - 0.5) * visibleWidth * 1.05;
+                const y = (iy / (sizeY - 1) - 0.5) * visibleHeight * 1.05;
+
+                posAttr.array[idx] = x;
+                posAttr.array[idx + 1] = y;
+                idx += 3;
+            }
+        }
+        posAttr.needsUpdate = true;
+    }
+
+    // Set colors once based on row index (three equal bands)
+    let colorIndex = 0;
     for (let ix = 0; ix < sizeX; ix++) {
         for (let iy = 0; iy < sizeY; iy++) {
-            // Center the grid coordinates
-            const x = (ix - sizeX / 2) * spacing;
-            const y = (iy - sizeY / 2) * spacing;
-            const z = 0;
-
-            positions[index] = x;
-            positions[index + 1] = y;
-            positions[index + 2] = z;
-
-            // Tiranga color band assignments based on Y height
-            // Upper band (Saffron): y > 65
-            // Middle band (White): -65 <= y <= 65
-            // Lower band (Green): y < -65
             let r = 1.0, g = 1.0, b = 1.0;
-            if (y > 65) {
+            if (iy >= (sizeY * 2) / 3) {
+                // Upper third (Bright Neon Saffron)
                 r = 255 / 255;
-                g = 119 / 255;
+                g = 135 / 255;
                 b = 0 / 255;
-            } else if (y < -65) {
-                r = 18 / 255;
-                g = 153 / 255;
-                b = 7 / 255;
+            } else if (iy < sizeY / 3) {
+                // Lower third (Bright Neon Green)
+                r = 0 / 255;
+                g = 216 / 255;
+                b = 38 / 255;
             } else {
+                // Middle third (Bright White)
                 r = 255 / 255;
                 g = 255 / 255;
                 b = 255 / 255;
             }
 
-            colors[index] = r;
-            colors[index + 1] = g;
-            colors[index + 2] = b;
-
-            index += 3;
+            colors[colorIndex] = r;
+            colors[colorIndex + 1] = g;
+            colors[colorIndex + 2] = b;
+            colorIndex += 3;
         }
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-    // Points Material (Glowy orbs)
+    // Populate initial coordinates
+    updateGridPositions();
+
+    // Points Material (Glowy orbs with dynamic color multiplication and additive blending)
     const material = new THREE.PointsMaterial({
-        size: 2.8,
+        size: 9.5,
+        map: createGlowTexture(),
         vertexColors: true,
         transparent: true,
-        opacity: 0.9
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        opacity: 1.0
     });
 
     const points = new THREE.Points(geometry, material);
@@ -108,6 +148,9 @@ window.initParticles = function(canvasId) {
         camera.updateProjectionMatrix();
 
         renderer.setSize(width, height);
+
+        // Recalculate grid positions to cover the new screen dimensions
+        updateGridPositions();
     });
 
     // Populate Ashok Chakra Spokes in the SVG overlay (Highly accurate spindle spokes)
@@ -210,8 +253,8 @@ window.initParticles = function(canvasId) {
 
         for (let ix = 0; ix < sizeX; ix++) {
             for (let iy = 0; iy < sizeY; iy++) {
-                const x = (ix - sizeX / 2) * spacing;
-                const y = (iy - sizeY / 2) * spacing;
+                const x = posAttr.array[idx];
+                const y = posAttr.array[idx + 1];
 
                 // Calm diagonal waving height propagation
                 let z = Math.sin((x + y) * 0.008 - time * 1.5) * 12;
