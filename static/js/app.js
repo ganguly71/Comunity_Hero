@@ -15,6 +15,21 @@ document.addEventListener('DOMContentLoaded', () => {
     initMap();
     loadIssues();
 });
+// Helper to set and update the user location marker globally
+function setUserMarker(lat, lng, label = "You are here") {
+    if (userLocationMarker) {
+        map.removeLayer(userLocationMarker);
+    }
+    const userIcon = L.divIcon({
+        className: 'user-location-marker',
+        html: '<div style="background-color: #00f2fe; width: 14px; height: 14px; border-radius: 50%; border: 3px solid #ffffff; box-shadow: 0 0 16px #00f2fe; animation: pulse 2s infinite;"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+    });
+    userLocationMarker = L.marker([lat, lng], { icon: userIcon })
+        .addTo(map)
+        .bindTooltip(label, { permanent: false, direction: 'top' });
+}
 
 // Initialize Leaflet Map
 function initMap() {
@@ -74,21 +89,6 @@ function initMap() {
                 }).catch(err => console.error("District center geocode failed:", err));
         }
     }
-
-function setUserMarker(lat, lng, label = "You are here") {
-    if (userLocationMarker) {
-        map.removeLayer(userLocationMarker);
-    }
-    const userIcon = L.divIcon({
-        className: 'user-location-marker',
-        html: '<div style="background-color: #00f2fe; width: 14px; height: 14px; border-radius: 50%; border: 3px solid #ffffff; box-shadow: 0 0 16px #00f2fe; animation: pulse 2s infinite;"></div>',
-        iconSize: [14, 14],
-        iconAnchor: [7, 7]
-    });
-    userLocationMarker = L.marker([lat, lng], { icon: userIcon })
-        .addTo(map)
-        .bindTooltip(label, { permanent: false, direction: 'top' });
-}
 
     // Center map: prioritize registered profile location to avoid inaccurate browser IP geolocations
     if (typeof profileLat !== 'undefined' && profileLat && profileLng) {
