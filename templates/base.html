@@ -78,7 +78,22 @@
             </ul>
 
             <div class="user-info user-info-desktop">
-
+                {% if current_user.role == 'citizen' %}
+                <div class="points-badge shimmer-effect">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="8"></circle><path d="M12 7v10M9 10h6M9 14h6"></path></svg>
+                    <span id="nav-user-points">{{ current_user.points }} pts</span>
+                </div>
+                {% else %}
+                <div class="points-badge" style="background: rgba(0, 242, 254, 0.15); color: var(--primary); border: 1px solid rgba(0, 242, 254, 0.3);">
+                    <span>Role: {{ current_user.role|replace('_', ' ')|title }}</span>
+                </div>
+                {% endif %}
+                <span class="user-name" style="font-weight:600; color: var(--text-main);">@{{ current_user.username }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+            </div>
+            {% endif %}
+        </nav>
+    </header>
     {% if request.endpoint not in ['login', 'register'] %}
     <div class="flash-container">
         {% with messages = get_flashed_messages(with_categories=true) %}
