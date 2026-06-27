@@ -261,6 +261,9 @@ function updateDistrictSummary() {
 
 // Select issue and show details in sidebar
 function selectIssue(issue) {
+    if (window.innerWidth < 1024) {
+        setMobileView('details');
+    }
     activeIssueId = issue.id;
     activeIssueData = issue;
     
@@ -449,6 +452,9 @@ function deselectIssue() {
     activeIssueData = null;
     document.getElementById('sidebar-details').style.display = 'none';
     document.getElementById('sidebar-placeholder').style.display = 'flex';
+    if (window.innerWidth < 1024) {
+        setMobileView('map');
+    }
 }
 
 function updateVoteButtons(userVote) {
@@ -1093,3 +1099,33 @@ function closeLightbox(e) {
         document.getElementById('media-lightbox').classList.remove('show');
     }
 }
+
+// Set active tab on mobile view
+function setMobileView(view) {
+    const layout = document.querySelector('.map-active-layout');
+    const mapBtn = document.getElementById('toggle-map-btn');
+    const detailsBtn = document.getElementById('toggle-details-btn');
+    
+    if (!layout || !mapBtn || !detailsBtn) return;
+    
+    if (view === 'map') {
+        layout.classList.remove('show-details');
+        layout.classList.add('show-map');
+        
+        mapBtn.className = 'glow-btn';
+        mapBtn.style.border = 'none';
+        
+        detailsBtn.className = 'glow-btn-outline';
+        detailsBtn.style.border = '1px solid transparent';
+    } else {
+        layout.classList.remove('show-map');
+        layout.classList.add('show-details');
+        
+        mapBtn.className = 'glow-btn-outline';
+        mapBtn.style.border = '1px solid transparent';
+        
+        detailsBtn.className = 'glow-btn';
+        detailsBtn.style.border = 'none';
+    }
+}
+

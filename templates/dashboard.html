@@ -28,7 +28,7 @@
 
 {% if current_user.role == 'admin' and not inspecting_state %}
     <!-- ==================== ADMIN VIEW ==================== -->
-    <div class="grid-container stagger-children" style="grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    <div class="dashboard-grid grid-admin stagger-children">
         
         <!-- States Metrics and Management -->
         <div class="glass-card animate-in">
@@ -168,7 +168,7 @@
 
 {% elif inspecting_state or current_user.role == 'state_manager' %}
     <!-- ==================== STATE MANAGER VIEW ==================== -->
-    <div class="grid-container stagger-children" style="grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    <div class="dashboard-grid grid-state-mgr stagger-children">
         
         <!-- District Standings / Charts -->
         <div class="glass-card animate-in">
@@ -241,7 +241,7 @@
 
 {% else %}
     <!-- ==================== CITIZEN VIEW ==================== -->
-    <div class="grid-container stagger-children" style="grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+    <div class="dashboard-grid grid-citizen stagger-children">
         
         <!-- User Profile Card -->
         <div class="glass-card animate-in" style="height: fit-content;">

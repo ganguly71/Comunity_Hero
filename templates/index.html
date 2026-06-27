@@ -14,9 +14,13 @@
         Exit Inspection View
     </a>
 </div>
-{% endif %}
+<!-- Mobile tab toggle view buttons -->
+<div class="mobile-view-toggle glass" style="display: none; justify-content: center; gap: 0.5rem; padding: 0.5rem; margin-bottom: 1rem; border-radius: 30px; position: relative; z-index: 100;">
+    <button id="toggle-map-btn" class="glow-btn" onclick="setMobileView('map')" style="padding: 0.45rem 1.25rem; font-size: 0.85rem; border-radius: 20px; flex: 1; border: none;">🗺️ Map View</button>
+    <button id="toggle-details-btn" class="glow-btn-outline" onclick="setMobileView('details')" style="padding: 0.45rem 1.25rem; font-size: 0.85rem; border-radius: 20px; flex: 1; border: 1px solid transparent;">📋 Details View</button>
+</div>
 
-<div class="grid-container map-active-layout" style="height: 100%;">
+<div class="grid-container map-active-layout show-map" style="height: 100%;">
     <!-- Interactive Map Column -->
     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">

@@ -60,7 +60,7 @@
                 </li>
                 
                 <!-- Info for drawer view -->
-                <li class="user-info" style="display: none; padding-top: 1rem; border-top: 1px solid var(--border-color); width: 100%;">
+                <li class="user-info-drawer" style="display: none; padding-top: 1rem; border-top: 1px solid var(--border-color); width: 100%;">
                     {% if current_user.role == 'citizen' %}
                     <div class="points-badge shimmer-effect">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="8"></circle><path d="M12 7v10M9 10h6M9 14h6"></path></svg>
@@ -76,7 +76,7 @@
                 </li>
             </ul>
             
-            <div class="user-info">
+            <div class="user-info user-info-desktop">
                 {% if current_user.role == 'citizen' %}
                 <div class="points-badge shimmer-effect">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="8"></circle><path d="M12 7v10M9 10h6M9 14h6"></path></svg>

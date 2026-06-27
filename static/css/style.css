@@ -156,7 +156,7 @@ header::after {
     border-radius: 2px;
 }
 
-.user-info {
+.user-info-desktop {
     display: flex;
     align-items: center;
     gap: 1.5rem;
@@ -252,7 +252,11 @@ header::after {
     .nav-links.open {
         right: 0;
     }
-    .user-info {
+    .user-info-desktop {
+        display: none !important;
+    }
+    .user-info-drawer {
+        display: flex !important;
         flex-direction: column;
         align-items: flex-start;
         width: 100%;
@@ -267,6 +271,24 @@ header::after {
     }
     .hamburger.open span:nth-child(3) {
         transform: translateY(-8px) rotate(-45deg);
+    }
+    
+    /* Mobile map layout view toggle */
+    .mobile-view-toggle {
+        display: flex !important;
+    }
+    
+    .map-active-layout.show-map .issue-sidebar {
+        display: none !important;
+    }
+    
+    .map-active-layout.show-details > div:first-child {
+        display: none !important;
+    }
+    
+    .map-active-layout.show-details .issue-sidebar {
+        width: 100% !important;
+        height: calc(100vh - 240px) !important;
     }
 }
 
@@ -1126,4 +1148,45 @@ main {
         animation: gradientShift 4s linear infinite;
     }
 }
+
+/* Dashboard responsive grid systems */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+    .dashboard-grid.grid-admin,
+    .dashboard-grid.grid-state-mgr {
+        grid-template-columns: 2fr 1fr;
+    }
+    .dashboard-grid.grid-citizen {
+        grid-template-columns: 1fr 2fr;
+    }
+}
+
+/* Leaderboard horizontal tab scrolling on mobile */
+.tabs-scroll-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+}
+
+.tabs-scroll-wrapper::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for a clean mobile UI */
+}
+
+@media (max-width: 768px) {
+    .tabs-scroll-wrapper {
+        justify-content: flex-start !important;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+
 
