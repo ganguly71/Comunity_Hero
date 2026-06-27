@@ -230,6 +230,18 @@ header::after {
     background-color: var(--text-main);
     transition: var(--transition-smooth);
 }
+/* Backdrop overlay for mobile drawer */
+.nav-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+}
+.nav-backdrop.show {
+    display: block;
+}
+
 @media (max-width: 1023px) {
     .hamburger {
         display: flex;
@@ -279,6 +291,27 @@ header::after {
         transform: translateY(-8px) rotate(-45deg);
     }
     
+    /* Force dashboard grids to stack on mobile */
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Force map layout to stack on mobile */
+    .grid-container {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Mobile-friendly admin/manager state cards */
+    .issue-card {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    /* Main content reduced padding on mobile */
+    main {
+        padding: 1rem !important;
+    }
+
     /* Mobile map layout view toggle */
     .mobile-view-toggle {
         display: flex !important;

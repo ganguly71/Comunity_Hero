@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     
     <!-- Custom stylesheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
 </head>
 <body>
 
@@ -26,6 +26,7 @@
                 <span></span>
                 <span></span>
             </button>
+            <div class="nav-backdrop" id="nav-backdrop" onclick="closeMenu()"></div>
             
             <ul class="nav-links">
                 {% if current_user.role != 'district_manager' %}
@@ -120,9 +121,25 @@
         function toggleMenu() {
             const navLinks = document.querySelector('.nav-links');
             const hamburger = document.getElementById('hamburger-menu-btn');
+            const backdrop = document.getElementById('nav-backdrop');
             if (navLinks) navLinks.classList.toggle('open');
             if (hamburger) hamburger.classList.toggle('open');
+            if (backdrop) backdrop.classList.toggle('show');
         }
+        function closeMenu() {
+            const navLinks = document.querySelector('.nav-links');
+            const hamburger = document.getElementById('hamburger-menu-btn');
+            const backdrop = document.getElementById('nav-backdrop');
+            if (navLinks) navLinks.classList.remove('open');
+            if (hamburger) hamburger.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('show');
+        }
+        // Auto-close drawer when a nav link is tapped
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.addEventListener('click', closeMenu);
+            });
+        });
     </script>
     {% block scripts %}{% endblock %}
 </body>
