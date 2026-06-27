@@ -17,26 +17,35 @@
     }
     
     .hero-col-left {
+        width: 100%;
+        max-width: 380px;
         text-align: right;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
         justify-content: center;
+        justify-self: end;
     }
     
     .hero-col-right {
+        width: 100%;
+        max-width: 380px;
         text-align: left;
         display: flex;
         flex-direction: column;
         align-items: flex-start;
         justify-content: center;
+        justify-self: start;
     }
     
     .hero-col-center {
         width: clamp(380px, 55vw, 520px);
         height: clamp(380px, 55vw, 520px);
-        visibility: hidden;
-        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem;
     }
 
     .hero-side-title {
@@ -57,7 +66,9 @@
         backdrop-filter: blur(32px);
         -webkit-backdrop-filter: blur(32px);
         box-shadow: 0 8px 32px 0 rgba(0, 0, 128, 0.2);
-        display: inline-block;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
         transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     }
     .motto-box:hover {
@@ -117,6 +128,12 @@
             margin-right: auto;
         }
         .hero-col-center {
+            width: 100%;
+            height: auto;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+        #ashok-chakra-bg {
             display: none !important;
         }
     }
@@ -126,19 +143,6 @@
 <canvas id="particles-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; pointer-events: none;"></canvas>
 <!-- Dark transparent overlay to dim particles background slightly -->
 <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(4, 9, 20, 0.2); z-index: -2; pointer-events: none;"></div>
-
-<!-- Ashok Chakra Overlay (Tiranga Glow Enabled) -->
-<div id="ashok-chakra-overlay" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(0deg); width: clamp(380px, 55vw, 520px); height: clamp(380px, 55vw, 520px); z-index: -1; pointer-events: none; opacity: 0.80; filter: drop-shadow(0 -12px 25px rgba(255, 119, 0, 0.65)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.45)) drop-shadow(0 12px 25px rgba(18, 153, 7, 0.65)); transition: opacity 0.5s ease;">
-    <svg id="chakra-svg" viewBox="0 0 200 200" width="100%" height="100%">
-        <!-- Solid background circle to prevent transparency -->
-        <circle cx="100" cy="100" r="90" fill="#ffffff" />
-        <circle cx="100" cy="100" r="90" fill="none" stroke="#000080" stroke-width="6" />
-        <circle cx="100" cy="100" r="82" fill="none" stroke="#000080" stroke-width="1.5" />
-        <!-- Accurate Solid Hub & Center Pinhole -->
-        <circle cx="100" cy="100" r="14" fill="#000080" />
-        <circle cx="100" cy="100" r="4" fill="#ffffff" />
-    </svg>
-</div>
 
 <!-- Hero Section -->
 <section class="hero-section" style="min-height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem 1rem; position: relative;">
@@ -160,18 +164,32 @@
                 <div style="font-size: 0.85rem; font-weight: 700; color: #FFF;"><span style="color: #FF7700; font-weight: 800;">+15 XP</span> for every verified report</div>
             </div>
 
-            <!-- CTA Button -->
-            <div class="animate-in" style="animation-delay: 0.3s; margin-top: 1.5rem;">
-                {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('index') }}" class="glow-btn" style="background: linear-gradient(135deg, #FF7700, #ffaa00); box-shadow: 0 4px 15px rgba(255, 119, 0, 0.4); padding: 0.85rem 2rem; font-size: 1rem;">Move to the Map</a>
-                {% else %}
-                    <a href="{{ url_for('register') }}" class="glow-btn" style="background: linear-gradient(135deg, #FF7700, #ffaa00); box-shadow: 0 4px 15px rgba(255, 119, 0, 0.4); padding: 0.85rem 2rem; font-size: 1rem;">Get Started</a>
-                {% endif %}
-            </div>
+            <!-- CTA Button removed from here -->
         </div>
 
-        <!-- Hidden center spacer that mimics Ashok Chakra dimensions -->
-        <div class="hero-col-center"></div>
+        <!-- Center spacer containing the CTA buttons over the Ashok Chakra -->
+        <div class="hero-col-center animate-in" style="animation-delay: 0.3s; position: relative;">
+            <!-- Ashok Chakra Background centered perfectly within this column container -->
+            <div id="ashok-chakra-bg" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(0deg); width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.80; filter: drop-shadow(0 -12px 25px rgba(255, 119, 0, 0.65)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.45)) drop-shadow(0 12px 25px rgba(18, 153, 7, 0.65));">
+                <svg id="chakra-svg" viewBox="0 0 200 200" width="100%" height="100%">
+                    <!-- Solid background circle to prevent transparency -->
+                    <circle cx="100" cy="100" r="90" fill="#ffffff" />
+                    <circle cx="100" cy="100" r="90" fill="none" stroke="#000080" stroke-width="6" />
+                    <circle cx="100" cy="100" r="82" fill="none" stroke="#000080" stroke-width="1.5" />
+                    <!-- Accurate Solid Hub & Center Pinhole -->
+                    <circle cx="100" cy="100" r="14" fill="#000080" />
+                    <circle cx="100" cy="100" r="4" fill="#ffffff" />
+                </svg>
+            </div>
+            
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('index') }}" class="glow-btn" style="background: linear-gradient(135deg, #FF7700, #ffaa00); box-shadow: 0 4px 15px rgba(255, 119, 0, 0.4); padding: 0.85rem 2.25rem; font-size: 1rem; border: 2.5px solid #000080; width: 220px; text-align: center; font-weight: 700;">Move to the Map</a>
+                <a href="{{ url_for('leaderboard') }}" class="glow-btn" style="background: linear-gradient(135deg, #129907, #22c55e); box-shadow: 0 4px 15px rgba(18, 153, 7, 0.4); padding: 0.85rem 2.25rem; font-size: 1rem; border: 2.5px solid #000080; width: 220px; text-align: center; font-weight: 700;">View Leaderboard</a>
+            {% else %}
+                <a href="{{ url_for('register') }}" class="glow-btn" style="background: linear-gradient(135deg, #FF7700, #ffaa00); box-shadow: 0 4px 15px rgba(255, 119, 0, 0.4); padding: 0.85rem 2.25rem; font-size: 1rem; border: 2.5px solid #000080; width: 220px; text-align: center; font-weight: 700;">Get Started</a>
+                <a href="{{ url_for('login') }}" class="glow-btn" style="background: linear-gradient(135deg, #129907, #22c55e); box-shadow: 0 4px 15px rgba(18, 153, 7, 0.4); padding: 0.85rem 2.25rem; font-size: 1rem; border: 2.5px solid #000080; width: 220px; text-align: center; font-weight: 700;">Sign In</a>
+            {% endif %}
+        </div>
 
         <!-- Right Side (Green Themes) -->
         <div class="hero-col-right">
@@ -188,14 +206,7 @@
                 <div style="font-size: 0.85rem; font-weight: 700; color: #FFF;"><span style="color: #129907; font-weight: 800;">+50 XP</span> Resolution Bonus</div>
             </div>
 
-            <!-- CTA Button -->
-            <div class="animate-in" style="animation-delay: 0.4s; margin-top: 1.5rem;">
-                {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('leaderboard') }}" class="glow-btn" style="background: linear-gradient(135deg, #129907, #22c55e); box-shadow: 0 4px 15px rgba(18, 153, 7, 0.4); padding: 0.85rem 2rem; font-size: 1rem;">View Leaderboard</a>
-                {% else %}
-                    <a href="{{ url_for('login') }}" class="glow-btn" style="background: linear-gradient(135deg, #129907, #22c55e); box-shadow: 0 4px 15px rgba(18, 153, 7, 0.4); padding: 0.85rem 2rem; font-size: 1rem;">Sign In</a>
-                {% endif %}
-            </div>
+            <!-- CTA Button removed from here -->
         </div>
     </div>
 </section>
