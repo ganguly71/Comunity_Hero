@@ -35,6 +35,10 @@
     box-sizing: border-box;
 }
 
+html, body {
+    overflow-x: hidden;
+}
+
 body {
     background-color: var(--bg-dark);
     color: var(--text-main);
@@ -42,7 +46,6 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow-x: hidden;
 }
 
 /* Custom Scrollbar */
@@ -234,7 +237,7 @@ header::after {
     .nav-links {
         position: fixed;
         top: 0;
-        right: -100%;
+        right: 0;
         width: 280px;
         height: 100vh;
         background: rgba(10, 14, 23, 0.95);
@@ -246,11 +249,14 @@ header::after {
         align-items: flex-start;
         padding: 5rem 2rem 2rem 2rem;
         gap: 1.5rem;
-        transition: var(--transition-smooth);
+        transform: translateX(100%);
+        visibility: hidden;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s;
         z-index: 1050;
     }
     .nav-links.open {
-        right: 0;
+        transform: translateX(0);
+        visibility: visible;
     }
     .user-info-desktop {
         display: none !important;
