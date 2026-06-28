@@ -221,6 +221,7 @@ header::after {
     border: none;
     cursor: pointer;
     padding: 0;
+    position: relative;
     z-index: 1100;
 }
 .hamburger span {
