@@ -103,7 +103,7 @@ The **Impact Stats** panel provides real-time data transparency:
 
 ## 👤 Mock Credentials for Demo
 
-Access different tier roles with these seeded accounts (password for all seeded accounts is `password123`):
+Access different tier roles with these seeded accounts (password for all seeded accounts is `Password123`):
 
 ### 🛡️ Admin & State Managers
 | Role | Area | Username | Email |
