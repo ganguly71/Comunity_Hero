@@ -565,31 +565,10 @@ def dashboard():
                     'completion_rate': round(completion_rate, 1),
                     'managers_count': managers_count
                 })
-            # Query issues in states with no district managers
-            states_with_issues = db.session.query(Issue.state).distinct().all()
-            states_with_issues = [s[0] for s in states_with_issues if s[0]]
-            
-            unassigned_alerts = []
-            for st in states_with_issues:
-                has_dm = User.query.filter_by(role='district_manager', state=st).first() is not None
-                if not has_dm:
-                    state_issues = Issue.query.filter_by(state=st).order_by(Issue.created_at.desc()).all()
-                    for issue in state_issues:
-                        unassigned_alerts.append({
-                            'id': issue.id,
-                            'title': issue.title,
-                            'description': issue.description,
-                            'district': issue.district,
-                            'state': issue.state,
-                            'created_at': issue.created_at.strftime('%Y-%m-%d %H:%M'),
-                            'reporter': issue.reporter.username
-                        })
-
             state_managers = User.query.filter_by(role='state_manager').all()
             return render_template('dashboard.html', 
                                    states_data=states_data, 
-                                   state_managers=state_managers,
-                                   unassigned_alerts=unassigned_alerts)
+                                   state_managers=state_managers)
                                    
     else: # Citizen
         user_issues = Issue.query.filter_by(user_id=current_user.id).order_by(Issue.created_at.desc()).all()
@@ -815,46 +794,13 @@ def get_issues():
             if current_user.role == 'state_manager' and target_state and target_state != current_user.state:
                 return jsonify({'error': 'Unauthorized state scope'}), 403
                 
-    if current_user.role == 'district_manager':
-        all_state_issues = Issue.query.filter_by(state=current_user.state).all()
-        state_managers = User.query.filter_by(role='district_manager', state=current_user.state).all()
+    query = Issue.query
+    if target_district:
+        query = query.filter_by(district=target_district)
+    if target_state:
+        query = query.filter_by(state=target_state)
         
-        filtered_issues = []
-        for issue in all_state_issues:
-            if issue.district == current_user.district:
-                filtered_issues.append(issue)
-            else:
-                district_has_manager = any(m.district == issue.district for m in state_managers)
-                if not district_has_manager:
-                    closest_mgr = None
-                    min_dist = float('inf')
-                    for m in state_managers:
-                        m_lat, m_lon = m.latitude, m.longitude
-                        if m_lat is None or m_lon is None:
-                            m_lat, m_lon, _, _ = geocode_address(f"{m.district}, {m.state}")
-                            if m_lat is not None and m_lon is not None:
-                                m.latitude = m_lat
-                                m.longitude = m_lon
-                                db.session.add(m)
-                                db.session.commit()
-                        
-                        if m_lat is not None and m_lon is not None:
-                            dist = haversine_distance(issue.latitude, issue.longitude, m_lat, m_lon)
-                            if dist < min_dist:
-                                min_dist = dist
-                                closest_mgr = m
-                                
-                    if closest_mgr and closest_mgr.id == current_user.id:
-                        filtered_issues.append(issue)
-        issues = filtered_issues
-        issues.sort(key=lambda x: x.created_at, reverse=True)
-    else:
-        query = Issue.query
-        if target_district:
-            query = query.filter_by(district=target_district)
-        if target_state:
-            query = query.filter_by(state=target_state)
-        issues = query.order_by(Issue.created_at.desc()).all()
+    issues = query.order_by(Issue.created_at.desc()).all()
     output = []
     for issue in issues:
         # Determine if current user voted
@@ -990,43 +936,6 @@ def report_issue():
         if issue_district != current_user.district or issue_state != current_user.state:
             return jsonify({'error': f"Cannot report issues outside your registered area ({current_user.district}, {current_user.state})."}), 403
 
-    # Dynamic manager routing logic
-    state_managers = User.query.filter_by(role='district_manager', state=issue_state).all()
-    assigned_manager = None
-    notice_to_admin = False
-    routing_msg = ""
-
-    if state_managers:
-        exact_manager = next((m for m in state_managers if m.district == issue_district), None)
-        if exact_manager:
-            assigned_manager = exact_manager
-            routing_msg = f"Assigned directly to district manager @{assigned_manager.username}."
-        else:
-            min_dist = float('inf')
-            for m in state_managers:
-                m_lat, m_lon = m.latitude, m.longitude
-                if m_lat is None or m_lon is None:
-                    m_lat, m_lon, _, _ = geocode_address(f"{m.district}, {m.state}")
-                    if m_lat is not None and m_lon is not None:
-                        m.latitude = m_lat
-                        m.longitude = m_lon
-                        db.session.add(m)
-                
-                if m_lat is not None and m_lon is not None:
-                    dist = haversine_distance(latitude, longitude, m_lat, m_lon)
-                    if dist < min_dist:
-                        min_dist = dist
-                        assigned_manager = m
-            
-            if assigned_manager:
-                routing_msg = f"No manager assigned in {issue_district}. Routed to closest manager @{assigned_manager.username} ({round(min_dist, 1)} km away)."
-            else:
-                notice_to_admin = True
-                routing_msg = f"No manager coordinates available in {issue_state}. Routed to System Admin."
-    else:
-        notice_to_admin = True
-        routing_msg = f"No district manager is assigned yet in {issue_state}. Routed to System Admin."
-
     issue = Issue(
         title=title,
         description=description,
@@ -1095,89 +1004,9 @@ def report_issue():
         """
         send_brevo_email(current_user.email, current_user.username, subject, html_content)
     
-    # Send email alerts to admin (if no manager in state) or to the assigned manager
-    if notice_to_admin:
-        admins = User.query.filter_by(role='admin').all()
-        for admin in admins:
-            if admin.email:
-                admin_subject = f"[URGENT Notice] No District Manager in {issue_state} - Issue #{issue.id}"
-                admin_html = f"""
-                <html>
-                    <body style="font-family: sans-serif; background-color: #0b0f19; color: #f8fafc; padding: 25px;">
-                        <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #ef4444; border-radius: 12px; padding: 30px; box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15);">
-                            <h2 style="color: #ef4444; margin-top: 0; font-family: 'Segoe UI', Arial, sans-serif; font-weight: 800; border-bottom: 2px solid #ef4444; padding-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">🚨 URGENT: JURISDICTION ALERTACT</h2>
-                            <p style="font-size: 1.15rem; font-weight: 800; color: #ef4444; margin-bottom: 20px;">
-                                [Notice] No district manager is assigned yet in {issue_state} state.
-                            </p>
-                            <div style="background-color: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px 20px; border-radius: 8px; margin-bottom: 20px;">
-                                <h3 style="margin-top: 0; color: #00f2fe; font-size: 1rem;">Issue Details:</h3>
-                                <ul style="margin: 0; padding-left: 20px; color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
-                                    <li><strong>Title:</strong> {issue.title}</li>
-                                    <li><strong>Description:</strong> {issue.description}</li>
-                                    <li><strong>District:</strong> {issue_district}</li>
-                                    <li><strong>State:</strong> {issue_state}</li>
-                                    <li><strong>Reporter:</strong> @{current_user.username}</li>
-                                </ul>
-                            </div>
-                            <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.5;">
-                                Please log in to your System Admin Dashboard to register/assign state or district managers for the {issue_state} jurisdiction area.
-                            </p>
-                        </div>
-                    </body>
-                </html>
-                """
-                send_brevo_email(admin.email, admin.username, admin_subject, admin_html)
-    elif assigned_manager:
-        if assigned_manager.email:
-            if assigned_manager.district != issue_district:
-                mgr_subject = f"[Community Hero] Fallback Routing Notice: Issue #{issue.id}"
-                mgr_html = f"""
-                <html>
-                    <body style="font-family: sans-serif; background-color: #0b0f19; color: #f8fafc; padding: 25px;">
-                        <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #f59e0b; border-radius: 12px; padding: 30px; box-shadow: 0 4px 20px rgba(245, 158, 11, 0.15);">
-                            <h2 style="color: #f59e0b; margin-top: 0; font-family: 'Segoe UI', Arial, sans-serif; font-weight: 800; border-bottom: 2px solid #f59e0b; padding-bottom: 10px; text-transform: uppercase;">⚠️ FALLBACK JURISDICTION ROUTING</h2>
-                            <p style="font-size: 1.05rem; font-weight: 700; color: #fbbf24; margin-bottom: 20px;">
-                                An issue was reported in {issue_district}, {issue_state}. Since no district manager is assigned to {issue_district}, this issue has been routed to you as the closest manager in the state.
-                            </p>
-                            <div style="background-color: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px 20px; border-radius: 8px; margin-bottom: 20px;">
-                                <h3 style="margin-top: 0; color: #00f2fe; font-size: 1rem;">Issue Details:</h3>
-                                <ul style="margin: 0; padding-left: 20px; color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
-                                    <li><strong>Title:</strong> {issue.title}</li>
-                                    <li><strong>Description:</strong> {issue.description}</li>
-                                    <li><strong>Reporter:</strong> @{current_user.username}</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </body>
-                </html>
-                """
-            else:
-                mgr_subject = f"[Community Hero] New Issue Assigned: #{issue.id}"
-                mgr_html = f"""
-                <html>
-                    <body style="font-family: sans-serif; background-color: #0b0f19; color: #f8fafc; padding: 25px;">
-                        <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #00f2fe; border-radius: 12px; padding: 30px; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.15);">
-                            <h2 style="color: #00f2fe; margin-top: 0; font-family: 'Segoe UI', Arial, sans-serif; font-weight: 800; border-bottom: 2px solid #00f2fe; padding-bottom: 10px; text-transform: uppercase;">📥 NEW ISSUE JURISDICTION</h2>
-                            <p style="font-size: 1.05rem; font-weight: 700; color: #f8fafc; margin-bottom: 20px;">
-                                A new issue has been reported in your district: {issue_district}.
-                            </p>
-                            <div style="background-color: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px 20px; border-radius: 8px; margin-bottom: 20px;">
-                                <h3 style="margin-top: 0; color: #00f2fe; font-size: 1rem;">Issue Details:</h3>
-                                <ul style="margin: 0; padding-left: 20px; color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
-                                    <li><strong>Title:</strong> {issue.title}</li>
-                                    <li><strong>Description:</strong> {issue.description}</li>
-                                    <li><strong>Reporter:</strong> @{current_user.username}</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </body>
-                </html>
-                """
-            send_brevo_email(assigned_manager.email, assigned_manager.username, mgr_subject, mgr_html)
-
     return jsonify({
         'success': True,
-        'message': f'Issue reported! {routing_msg} Auto-categorized: {category}. +15 Pts!',
+        'message': f'Issue reported! Assigned to {issue_district}, {issue_state}. Auto-categorized: {category}. +15 Pts!',
         'issue_id': issue.id,
         'category': category
     })
@@ -1676,16 +1505,12 @@ def create_district_manager():
         flash('Username already exists.', 'error')
         return redirect(url_for('dashboard'))
         
-    lat, lon, _, _ = geocode_address(f"{district}, {target_state}")
-    
     user = User(
         username=username,
         email=email,
         role='district_manager',
         state=target_state,
         district=district,
-        latitude=lat,
-        longitude=lon,
         created_by_id=current_user.id
     )
     user.set_password(password)

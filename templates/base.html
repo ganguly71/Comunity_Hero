@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     
     <!-- Custom stylesheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
@@ -26,7 +26,6 @@
                 <span></span>
                 <span></span>
             </button>
-            <div class="nav-backdrop" id="nav-backdrop" onclick="closeMenu()"></div>
             
             <ul class="nav-links">
                 {% if current_user.role != 'district_manager' %}
@@ -76,7 +75,7 @@
                     <a href="{{ url_for('logout') }}" class="logout-btn" style="margin-top: 0.75rem; display: inline-block; text-align: center; width: 100%;">Logout</a>
                 </li>
             </ul>
-
+            
             <div class="user-info user-info-desktop">
                 {% if current_user.role == 'citizen' %}
                 <div class="points-badge shimmer-effect">
@@ -94,6 +93,7 @@
             {% endif %}
         </nav>
     </header>
+
     {% if request.endpoint not in ['login', 'register'] %}
     <div class="flash-container">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -120,25 +120,9 @@
         function toggleMenu() {
             const navLinks = document.querySelector('.nav-links');
             const hamburger = document.getElementById('hamburger-menu-btn');
-            const backdrop = document.getElementById('nav-backdrop');
             if (navLinks) navLinks.classList.toggle('open');
             if (hamburger) hamburger.classList.toggle('open');
-            if (backdrop) backdrop.classList.toggle('show');
         }
-        function closeMenu() {
-            const navLinks = document.querySelector('.nav-links');
-            const hamburger = document.getElementById('hamburger-menu-btn');
-            const backdrop = document.getElementById('nav-backdrop');
-            if (navLinks) navLinks.classList.remove('open');
-            if (hamburger) hamburger.classList.remove('open');
-            if (backdrop) backdrop.classList.remove('show');
-        }
-        // Auto-close drawer when a nav link is tapped
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.nav-links a').forEach(link => {
-                link.addEventListener('click', closeMenu);
-            });
-        });
     </script>
     {% block scripts %}{% endblock %}
 </body>

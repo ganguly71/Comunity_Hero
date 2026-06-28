@@ -9,14 +9,12 @@
 </div>
 
 <!-- Tab Navigation buttons (Redesigned with sliding underline) -->
-<div class="tabs-scroll-wrapper">
-    <div class="tabs-container" style="position: relative; display: flex; justify-content: flex-start; gap: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; width: fit-content; z-index: 10; flex-shrink: 0;">
-        <button class="tab-link active" data-tab="citizens" onclick="switchLeaderboardTab(this, 'citizens')" style="background: none; border: none; color: var(--text-main); font-family: var(--font-heading); font-size: 1rem; font-weight: 700; cursor: pointer; padding: 0.5rem 1rem; transition: var(--transition-smooth); position: relative; flex-shrink: 0;">🏆 Top Citizens</button>
-        <button class="tab-link" data-tab="districts" onclick="switchLeaderboardTab(this, 'districts')" style="background: none; border: none; color: var(--text-muted); font-family: var(--font-heading); font-size: 1rem; font-weight: 700; cursor: pointer; padding: 0.5rem 1rem; transition: var(--transition-smooth); position: relative; flex-shrink: 0;">📍 District Standings</button>
-        <button class="tab-link" data-tab="states" onclick="switchLeaderboardTab(this, 'states')" style="background: none; border: none; color: var(--text-muted); font-family: var(--font-heading); font-size: 1rem; font-weight: 700; cursor: pointer; padding: 0.5rem 1rem; transition: var(--transition-smooth); position: relative; flex-shrink: 0;">🗺️ Inter-State Standings</button>
-        <!-- Sliding Underline -->
-        <div id="tab-underline" style="position: absolute; bottom: -1px; left: 0; height: 3px; background: linear-gradient(90deg, #FF7700, #FFFFFF, #129907); box-shadow: 0 0 10px rgba(18,153,7,0.8); border-radius: 2px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 0px;"></div>
-    </div>
+<div class="tabs-container" style="position: relative; display: flex; justify-content: center; gap: 1.5rem; margin: 0 auto 2.5rem auto; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; width: fit-content; z-index: 10;">
+    <button class="tab-link active" data-tab="citizens" onclick="switchLeaderboardTab(this, 'citizens')" style="background: none; border: none; color: var(--text-main); font-family: var(--font-heading); font-size: 1rem; font-weight: 700; cursor: pointer; padding: 0.5rem 1rem; transition: var(--transition-smooth); position: relative;">🏆 Top Citizens</button>
+    <button class="tab-link" data-tab="districts" onclick="switchLeaderboardTab(this, 'districts')" style="background: none; border: none; color: var(--text-muted); font-family: var(--font-heading); font-size: 1rem; font-weight: 700; cursor: pointer; padding: 0.5rem 1rem; transition: var(--transition-smooth); position: relative;">📍 District Standings</button>
+    <button class="tab-link" data-tab="states" onclick="switchLeaderboardTab(this, 'states')" style="background: none; border: none; color: var(--text-muted); font-family: var(--font-heading); font-size: 1rem; font-weight: 700; cursor: pointer; padding: 0.5rem 1rem; transition: var(--transition-smooth); position: relative;">🗺️ Inter-State Standings</button>
+    <!-- Sliding Underline -->
+    <div id="tab-underline" style="position: absolute; bottom: -1px; left: 0; height: 3px; background: linear-gradient(90deg, #FF7700, #FFFFFF, #129907); box-shadow: 0 0 10px rgba(18,153,7,0.8); border-radius: 2px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 0px;"></div>
 </div>
 
 <div style="max-width: 800px; margin: 0 auto; width: 100%; position: relative; z-index: 10;">

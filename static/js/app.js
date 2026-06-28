@@ -73,13 +73,10 @@ function initMap() {
     };
     L.control.layers(baseMaps).addTo(map);
 
-    // Map view centering based on user role and jurisdiction scope
-    let centered = false;
-
-    if (userRole === 'admin' || userRole === 'state_manager') {
-        const targetDist = inspecting ? inspectDistrict : "";
-        const targetSt = inspecting ? inspectState : (userRole === 'state_manager' ? userState : "");
-        
+    // If role is manager or inspecting, geocode district center and center map
+    if (userRole !== 'citizen' || inspecting) {
+        const targetDist = inspecting ? inspectDistrict : userDistrict;
+        const targetSt = inspecting ? inspectState : userState;
         if (targetDist && targetSt) {
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(targetDist + ', ' + targetSt)}`)
                 .then(r => r.json())
@@ -89,77 +86,35 @@ function initMap() {
                         const lon = parseFloat(data[0].lon);
                         map.setView([lat, lon], 12);
                     }
-                }).catch(err => console.error("Inspection district center geocode failed:", err));
-            centered = true;
-        } else if (targetSt) {
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(targetSt)}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data && data.length > 0) {
-                        const lat = parseFloat(data[0].lat);
-                        const lon = parseFloat(data[0].lon);
-                        map.setView([lat, lon], 8);
-                    }
-                }).catch(err => console.error("Inspection state center geocode failed:", err));
-            centered = true;
-        }
-    } else if (userRole === 'district_manager') {
-        if (userDistrict && userState) {
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(userDistrict + ', ' + userState)}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data && data.length > 0) {
-                        const lat = parseFloat(data[0].lat);
-                        const lon = parseFloat(data[0].lon);
-                        map.setView([lat, lon], 12);
-                    }
-                }).catch(err => console.error("Manager district center geocode failed:", err));
-            centered = true;
+                }).catch(err => console.error("District center geocode failed:", err));
         }
     }
 
-    if (!centered) {
-        if (typeof profileLat !== 'undefined' && profileLat && profileLng) {
-            currentUserLocation = [profileLat, profileLng];
-            setUserMarker(profileLat, profileLng, "Your Registered Location");
-            if (userRole === 'citizen') {
-                map.setView([profileLat, profileLng], 14);
-            }
-        } else {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
-                    currentUserLocation = [userLat, userLng];
-                    setUserMarker(userLat, userLng, "You are here");
-                    if (userRole === 'citizen') {
-                        map.setView([userLat, userLng], 14);
-                    }
-                }, (err) => {
-                    console.warn("Geolocation failed or denied. Geocoding profile district/state fallback.");
-                    if (userDistrict && userState) {
-                        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(userDistrict + ', ' + userState)}`)
-                            .then(r => r.json())
-                            .then(data => {
-                                if (data && data.length > 0) {
-                                    const lat = parseFloat(data[0].lat);
-                                    const lon = parseFloat(data[0].lon);
-                                    map.setView([lat, lon], 12);
-                                }
-                            }).catch(err => console.error("Profile area center geocode failed:", err));
-                    }
-                });
-            } else if (userDistrict && userState) {
-                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(userDistrict + ', ' + userState)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data && data.length > 0) {
-                            const lat = parseFloat(data[0].lat);
-                            const lon = parseFloat(data[0].lon);
-                            map.setView([lat, lon], 12);
-                        }
-                    }).catch(err => console.error("Profile area center geocode failed:", err));
-            }
+    // Center map: prioritize registered profile location to avoid inaccurate browser IP geolocations
+    if (typeof profileLat !== 'undefined' && profileLat && profileLng) {
+        currentUserLocation = [profileLat, profileLng];
+        setUserMarker(profileLat, profileLng, "Your Registered Location");
+        
+        // Auto-center for citizen
+        if (userRole === 'citizen') {
+            map.setView([profileLat, profileLng], 14);
+        }
+    } else {
+        // Fallback to browser geolocation on load if profile location is missing
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                currentUserLocation = [userLat, userLng];
+                
+                setUserMarker(userLat, userLng, "You are here");
+                
+                if (userRole === 'citizen') {
+                    map.setView([userLat, userLng], 14);
+                }
+            }, (err) => {
+                console.warn("Geolocation service failed or permission denied. Defaulting coordinates.");
+            });
         }
     }
 
@@ -306,9 +261,6 @@ function updateDistrictSummary() {
 
 // Select issue and show details in sidebar
 function selectIssue(issue) {
-    if (window.innerWidth < 1024) {
-        setMobileView('details');
-    }
     activeIssueId = issue.id;
     activeIssueData = issue;
     
@@ -497,9 +449,6 @@ function deselectIssue() {
     activeIssueData = null;
     document.getElementById('sidebar-details').style.display = 'none';
     document.getElementById('sidebar-placeholder').style.display = 'flex';
-    if (window.innerWidth < 1024) {
-        setMobileView('map');
-    }
 }
 
 function updateVoteButtons(userVote) {
@@ -1144,33 +1093,3 @@ function closeLightbox(e) {
         document.getElementById('media-lightbox').classList.remove('show');
     }
 }
-
-// Set active tab on mobile view
-function setMobileView(view) {
-    const layout = document.querySelector('.map-active-layout');
-    const mapBtn = document.getElementById('toggle-map-btn');
-    const detailsBtn = document.getElementById('toggle-details-btn');
-    
-    if (!layout || !mapBtn || !detailsBtn) return;
-    
-    if (view === 'map') {
-        layout.classList.remove('show-details');
-        layout.classList.add('show-map');
-        
-        mapBtn.className = 'glow-btn';
-        mapBtn.style.border = 'none';
-        
-        detailsBtn.className = 'glow-btn-outline';
-        detailsBtn.style.border = '1px solid transparent';
-    } else {
-        layout.classList.remove('show-map');
-        layout.classList.add('show-details');
-        
-        mapBtn.className = 'glow-btn-outline';
-        mapBtn.style.border = '1px solid transparent';
-        
-        detailsBtn.className = 'glow-btn';
-        detailsBtn.style.border = 'none';
-    }
-}
-
