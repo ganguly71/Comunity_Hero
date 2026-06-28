@@ -190,6 +190,21 @@ function loadIssues() {
             allIssues = data;
             renderMarkers();
             updateDistrictSummary();
+
+            // Auto-locate issue if URL contains locate_issue_id param
+            const urlParams = new URLSearchParams(window.location.search);
+            const locateIssueId = urlParams.get('locate_issue_id');
+            if (locateIssueId) {
+                const targetId = parseInt(locateIssueId);
+                const issue = allIssues.find(i => i.id === targetId);
+                if (issue) {
+                    const m = markers.find(marker => marker.issueId === targetId);
+                    if (m) {
+                        map.setView(m.getLatLng(), 16);
+                        selectIssue(issue);
+                    }
+                }
+            }
         })
         .catch(err => console.error('Error fetching issues:', err));
 }
@@ -211,6 +226,7 @@ function renderMarkers() {
         const marker = L.marker([issue.latitude, issue.longitude], {
             icon: getCategoryIcon(issue.category, issue.intensity)
         }).addTo(map);
+        marker.issueId = issue.id;
 
         marker.on('click', () => {
             selectIssue(issue);
@@ -1108,4 +1124,79 @@ function closeLightbox(e) {
     if (!e || e.target.id !== 'lightbox-img') {
         document.getElementById('media-lightbox').classList.remove('show');
     }
+}
+
+function locateIssueById() {
+    const input = document.getElementById('issue-id-search-input');
+    if (!input) return;
+    const issueId = input.value.trim();
+    if (!issueId) {
+        alert("Please enter an Issue ID.");
+        return;
+    }
+
+    const id = parseInt(issueId);
+    if (isNaN(id)) {
+        alert("Please enter a valid numeric ID.");
+        return;
+    }
+
+    // Try locating in currently loaded issues first (immediate pan/select)
+    const localIssue = allIssues.find(i => i.id === id);
+    if (localIssue) {
+        const m = markers.find(marker => marker.issueId === id);
+        if (m) {
+            map.setView(m.getLatLng(), 16);
+            selectIssue(localIssue);
+            return;
+        }
+    }
+
+    // If not found locally, fetch details from api to see if it is in another district/state
+    fetch(`/api/issues/locate/${id}`)
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error("Issue not found.");
+                } else if (response.status === 403) {
+                    throw new Error("Unauthorized: This issue is outside your jurisdiction.");
+                } else {
+                    throw new Error("Failed to locate issue.");
+                }
+            }
+            return response.json();
+        })
+        .then(issue => {
+            // Check if we need to switch district inspection
+            if (userRole === 'admin' || userRole === 'state_manager') {
+                const currentDist = inspecting ? inspectDistrict : null;
+                const currentState = inspecting ? inspectState : null;
+
+                if (issue.district !== currentDist || issue.state !== currentState) {
+                    if (confirm(`Issue #${issue.id} is in "${issue.district}, ${issue.state}". Do you want to switch inspect scope to locate it?`)) {
+                        window.location.href = `/inspect/district/${encodeURIComponent(issue.district)}/${encodeURIComponent(issue.state)}?locate_issue_id=${issue.id}`;
+                    }
+                    return;
+                }
+            }
+            
+            // If we are authorized but somehow didn't select it locally (e.g., hidden under completed filter)
+            const showResolvedCheckbox = document.getElementById('toggle-resolved');
+            if (showResolvedCheckbox && (issue.status === 'Resolved' || issue.govt_status === 'DONE')) {
+                showResolvedCheckbox.checked = true;
+                renderMarkers();
+            }
+            
+            // Try pan and select again
+            const m = markers.find(marker => marker.issueId === id);
+            if (m) {
+                map.setView(m.getLatLng(), 16);
+                selectIssue(issue);
+            } else {
+                alert(`Located issue #${issue.id} but it could not be rendered on the map.`);
+            }
+        })
+        .catch(err => {
+            alert(err.message);
+        });
 }

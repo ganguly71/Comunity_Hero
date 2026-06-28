@@ -281,6 +281,10 @@ def inspect_district(district, state):
         return redirect(url_for('dashboard'))
         
     flash(f"Now inspecting district: {district}, {state}", 'info')
+    
+    locate_id = request.args.get('locate_issue_id')
+    if locate_id:
+        return redirect(url_for('index', locate_issue_id=locate_id))
     return redirect(url_for('index'))
 
 @app.route('/exit_state_inspection')
@@ -858,6 +862,72 @@ def get_issues():
         })
     return jsonify(output)
 
+@app.route('/api/issues/locate/<int:issue_id>', methods=['GET'])
+@login_required
+def locate_issue(issue_id):
+    issue = Issue.query.get(issue_id)
+    if not issue:
+        return jsonify({'error': 'Issue not found'}), 404
+        
+    # Enforce role-based access checks
+    if current_user.role in ['citizen', 'district_manager']:
+        if issue.state != current_user.state or issue.district != current_user.district:
+            return jsonify({'error': 'Unauthorized: Issue is outside your registered district.'}), 403
+    elif current_user.role == 'state_manager':
+        if issue.state != current_user.state:
+            return jsonify({'error': 'Unauthorized: Issue is outside your registered state.'}), 403
+            
+    img_url = None
+    if issue.image_filename:
+        if issue.image_filename.startswith('http'):
+            img_url = issue.image_filename
+        else:
+            img_url = url_for('static', filename='uploads/' + issue.image_filename)
+
+    user_vote = Vote.query.filter_by(issue_id=issue.id, user_id=current_user.id).first()
+    voted = user_vote.vote_type if user_vote else None
+    
+    comments_list = []
+    for c in issue.comments:
+        comments_list.append({
+            'author': c.author.username,
+            'content': c.content,
+            'created_at': c.created_at.strftime('%Y-%m-%d %H:%M')
+        })
+        
+    logs_list = []
+    for log in issue.update_logs:
+        logs_list.append({
+            'author': log.logger.username,
+            'content': log.content,
+            'status_update': log.status_update,
+            'created_at': log.created_at.strftime('%Y-%m-%d %H:%M')
+        })
+
+    return jsonify({
+        'id': issue.id,
+        'title': issue.title,
+        'description': issue.description,
+        'intensity': issue.intensity,
+        'category': issue.category,
+        'latitude': issue.latitude,
+        'longitude': issue.longitude,
+        'image_url': img_url,
+        'status': issue.status,
+        'govt_status': issue.govt_status,
+        'govt_status_updated_at': issue.govt_status_updated_at.strftime('%Y-%m-%d %H:%M') if issue.govt_status_updated_at else None,
+        'created_at': issue.created_at.strftime('%Y-%m-%d %H:%M'),
+        'reporter': issue.reporter.username,
+        'reporter_id': issue.user_id,
+        'reporter_points': issue.reporter.points,
+        'score': issue.vote_score,
+        'user_vote': voted,
+        'district': issue.district,
+        'state': issue.state,
+        'comments': comments_list,
+        'logs': logs_list
+    })
+
 @app.route('/api/issues/report', methods=['POST'])
 @login_required
 def report_issue():
@@ -965,6 +1035,72 @@ def report_issue():
     )
     db.session.add(log)
     db.session.commit()
+
+    # Alert notification for managerless districts
+    has_dm = User.query.filter_by(role='district_manager', state=issue_state, district=issue_district).first() is not None
+    if not has_dm:
+        # Get all managerless issues in this state
+        all_dms = User.query.filter_by(role='district_manager', state=issue_state).all()
+        managed_districts = {dm.district for dm in all_dms if dm.district}
+        
+        active_issues = Issue.query.filter_by(state=issue_state).filter(Issue.status != 'Resolved', Issue.govt_status != 'DONE').all()
+        managerless_issues = [i for i in active_issues if i.district not in managed_districts]
+        
+        recipients = []
+        state_managers = User.query.filter_by(role='state_manager', state=issue_state).all()
+        if state_managers:
+            for sm in state_managers:
+                if sm.email:
+                    recipients.append((sm.email, sm.username, 'State Manager'))
+        else:
+            admins = User.query.filter_by(role='admin').all()
+            for admin in admins:
+                if admin.email:
+                    recipients.append((admin.email, admin.username, 'Admin'))
+                    
+        if recipients:
+            subject = f"[Community Hero] ALERT: Unmanaged Issues in {issue_state}"
+            issues_html = ""
+            for mi in managerless_issues:
+                issues_html += f"""
+                <tr>
+                    <td style="border: 1px solid #e2e8f0; padding: 10px;">#{mi.id}</td>
+                    <td style="border: 1px solid #e2e8f0; padding: 10px;"><strong>{mi.title}</strong></td>
+                    <td style="border: 1px solid #e2e8f0; padding: 10px;">{mi.district}</td>
+                    <td style="border: 1px solid #e2e8f0; padding: 10px;">{mi.latitude}, {mi.longitude}</td>
+                    <td style="border: 1px solid #e2e8f0; padding: 10px;">{mi.created_at.strftime('%Y-%m-%d %H:%M')}</td>
+                </tr>
+                """
+                
+            for email, username, role in recipients:
+                html_content = f"""
+                <html>
+                    <body>
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #334155;">
+                            <h2>Managerless Issues Alert</h2>
+                            <p>Hello <strong>{username}</strong> ({role}),</p>
+                            <p>A new issue has been reported in a district with no assigned District Manager: <strong>{issue.district}, {issue.state}</strong>.</p>
+                            <p>Here is the updated list of active issues in <strong>{issue_state}</strong> that currently lack a District Manager:</p>
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem;">
+                                <thead>
+                                    <tr style="background-color: #f1f5f9; text-align: left;">
+                                        <th style="border: 1px solid #e2e8f0; padding: 10px;">ID</th>
+                                        <th style="border: 1px solid #e2e8f0; padding: 10px;">Title</th>
+                                        <th style="border: 1px solid #e2e8f0; padding: 10px;">District</th>
+                                        <th style="border: 1px solid #e2e8f0; padding: 10px;">Location</th>
+                                        <th style="border: 1px solid #e2e8f0; padding: 10px;">Reported At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {issues_html}
+                                </tbody>
+                            </table>
+                            <p style="margin-top: 20px; font-size: 0.85rem; color: #64748b;">This email was sent automatically because there is currently no local manager assigned to take charge of these operational areas.</p>
+                        </div>
+                    </body>
+                </html>
+                """
+                send_brevo_email(email, username, subject, html_content)
 
     # Send confirmation email to the reporter
     if current_user.email:

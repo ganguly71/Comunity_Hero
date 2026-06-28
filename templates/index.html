@@ -57,6 +57,11 @@
                 <!-- Dropdown suggestions box -->
                 <div id="search-suggestions" style="display: none; background: rgba(10, 14, 23, 0.95); border: 1px solid rgba(255, 119, 0, 0.35); border-radius: 12px; max-height: 180px; overflow-y: auto; box-shadow: var(--glass-shadow); padding: 0.25rem 0; width: 100%; box-sizing: border-box; z-index: 1010;"></div>
 
+                <div style="display: flex; gap: 0.5rem; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.5rem; margin-top: 0.25rem;">
+                    <input type="number" id="issue-id-search-input" class="glass-input" placeholder="Locate Issue by ID..." style="padding: 0.45rem 1.25rem; font-size: 0.85rem; height: 36px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); flex: 1;" onkeydown="if(event.key === 'Enter') locateIssueById()">
+                    <button type="button" class="glow-btn" onclick="locateIssueById()" style="padding: 0.45rem 1.25rem; font-size: 0.85rem; height: 36px; border-radius: 20px; box-shadow: none; min-width: 70px;">Locate</button>
+                </div>
+
                 <div style="display: flex; align-items: center; gap: 0.5rem; padding-left: 0.5rem;">
                     <input type="checkbox" id="toggle-resolved" onchange="renderMarkers()" style="cursor: pointer; width: 14px; height: 14px; accent-color: var(--primary);">
                     <label for="toggle-resolved" style="font-size: 0.75rem; color: var(--text-muted); cursor: pointer; user-select: none; font-weight: 600;">Show Completed (DONE) Issues</label>
