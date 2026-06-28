@@ -34,6 +34,7 @@ The application enforces strict role-based access control (RBAC) across four tie
 * Powered by **Leaflet.js**, the satellite view displays real-time pins for all active civic grievances.
 * Pins are dynamically color-coded by **Intensity** (Red: High, Yellow: Medium, Blue: Low) and **Status** (Open, Under Review, In Progress, Resolved).
 * **GPS Boundaries**: Issue reporting is strictly verified to be within **10 km of the user's current GPS location** (received live via geolocation) to prevent false or out-of-jurisdiction reports.
+* **Locate Issue by ID**: Locate any active or resolved issue using its numeric ID. For Admins and State Managers, searching for an issue outside the currently inspected district will trigger a prompt to switch inspection scopes, automatically reloading the session under the target district and auto-selecting the issue.
 
 ### 4. Secure Anonymous Connections & Email Routing
 * **Anonymous Connections**: District Managers can contact reporters directly via the portal. The manager *never* sees the citizen's personal email address, protecting citizen privacy.
@@ -43,6 +44,7 @@ The application enforces strict role-based access control (RBAC) across four tie
   * **Report Receipts**: Instantly emailed to the reporter upon successfully filing a grievance.
   * **Status Notifications**: Dispatched to the citizen when a manager updates the issue state.
   * **Weekly digests**: Automatic cron checks flag stale issues (>7 days unresolved) or popular issues (>=10 votes) and email a digest report to the respective District Managers.
+  * **Unmanaged Grievance Alerts**: Sends a real-time list of all active unmanaged issues in a state to the respective State Manager when a new managerless issue is reported. If the state has no manager, the alert automatically escalates to all Global Admins. Once a manager is assigned, their issues are dynamically excluded from subsequent digests.
 
 ---
 
