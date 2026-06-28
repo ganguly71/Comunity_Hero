@@ -35,10 +35,6 @@
     box-sizing: border-box;
 }
 
-html {
-    overflow-x: hidden;
-}
-
 body {
     background-color: var(--bg-dark);
     color: var(--text-main);
@@ -46,13 +42,15 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow-x: hidden;
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
+}
+div[style*="overflow-x: auto"], div[style*="overflow-x: scroll"], .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
 }
 ::-webkit-scrollbar-track {
     background: var(--bg-dark);
@@ -238,7 +236,7 @@ header::after {
     .nav-links {
         position: fixed;
         top: 0;
-        right: -100%;
+        right: 0;
         width: 280px;
         height: 100vh;
         background: rgba(10, 14, 23, 0.95);
@@ -252,9 +250,10 @@ header::after {
         gap: 1.5rem;
         transition: var(--transition-smooth);
         z-index: 1050;
+        transform: translateX(100%);
     }
     .nav-links.open {
-        right: 0;
+        transform: translateX(0);
     }
     .user-info {
         flex-direction: column;
