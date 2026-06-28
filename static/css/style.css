@@ -35,6 +35,10 @@
     box-sizing: border-box;
 }
 
+html {
+    overflow-x: hidden;
+}
+
 body {
     background-color: var(--bg-dark);
     color: var(--text-main);
@@ -267,6 +271,94 @@ header::after {
     }
     .hamburger.open span:nth-child(3) {
         transform: translateY(-8px) rotate(-45deg);
+    }
+
+    /* Mobile Header user-info visibility toggles */
+    .user-info-desktop {
+        display: none !important;
+    }
+    .user-info-drawer {
+        display: block !important;
+    }
+
+    /* Map Active layout: fit map to full container on mobile, show sidebar as bottom drawer */
+    body:has(.map-active-layout) main {
+        padding: 0 !important;
+    }
+    
+    body:has(.map-active-layout) .flash-container {
+        padding: 0.5rem 1rem;
+    }
+
+    .grid-container.map-active-layout {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        height: calc(100vh - 75px) !important;
+        overflow: hidden;
+        gap: 0;
+    }
+    
+    .grid-container.map-active-layout > div {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .map-container {
+        height: 100% !important;
+        min-height: 0 !important;
+        flex: 1;
+        border-radius: 0;
+        border: none;
+    }
+    
+    /* Make the sidebar a floating bottom sheet / drawer */
+    .issue-sidebar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: auto;
+        max-height: 65%;
+        min-height: 0 !important;
+        z-index: 1001;
+        background: rgba(10, 14, 23, 0.98);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-top: 2.5px solid rgba(0, 242, 254, 0.35);
+        border-radius: 24px 24px 0 0;
+        margin: 0;
+        padding: 1.5rem;
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.7);
+        transform: translateY(100%);
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        visibility: hidden;
+        pointer-events: none;
+        opacity: 0;
+    }
+    
+    .issue-sidebar.has-active-issue {
+        transform: translateY(0);
+        visibility: visible;
+        pointer-events: auto;
+        opacity: 1;
+    }
+    
+    #sidebar-placeholder {
+        display: none !important;
+    }
+    
+    #sidebar-details {
+        display: flex !important;
+        padding: 0;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
 }
 
@@ -1124,6 +1216,41 @@ main {
 @media (prefers-reduced-motion: no-preference) {
     .stat-num-gradient {
         animation: gradientShift 4s linear infinite;
+    }
+}
+
+/* Homepage Motto Box & Leaderboard tab list fixes for mobile */
+@media (max-width: 600px) {
+    .hero-side-title span {
+        white-space: normal !important;
+    }
+    
+    .motto-box {
+        padding: 1rem 1.5rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .tabs-container {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+        justify-content: center !important;
+        padding-bottom: 0.75rem !important;
+    }
+    
+    .tab-link {
+        font-size: 0.8rem !important;
+        padding: 0.4rem 0.6rem !important;
+        flex-shrink: 0 !important;
+    }
+    
+    #tab-underline {
+        display: none !important;
+    }
+    
+    .tab-link.active {
+        border-bottom: 2px solid var(--primary) !important;
     }
 }
 

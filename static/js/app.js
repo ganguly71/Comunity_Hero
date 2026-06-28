@@ -268,6 +268,14 @@ function selectIssue(issue) {
     const details = document.getElementById('sidebar-details');
     details.style.display = 'flex';
 
+    // Toggle active issue class for mobile bottom sheet
+    const sidebar = document.querySelector('.issue-sidebar');
+    if (sidebar) sidebar.classList.add('has-active-issue');
+    
+    // Hide map location HUD on mobile when details are active
+    const hud = document.getElementById('map-status-hud');
+    if (hud) hud.style.opacity = '0';
+
     // Populate data
     document.getElementById('issue-title').innerText = issue.title;
     
@@ -449,6 +457,14 @@ function deselectIssue() {
     activeIssueData = null;
     document.getElementById('sidebar-details').style.display = 'none';
     document.getElementById('sidebar-placeholder').style.display = 'flex';
+
+    // Remove active issue class for mobile bottom sheet
+    const sidebar = document.querySelector('.issue-sidebar');
+    if (sidebar) sidebar.classList.remove('has-active-issue');
+    
+    // Restore map location HUD
+    const hud = document.getElementById('map-status-hud');
+    if (hud) hud.style.opacity = '1';
 }
 
 function updateVoteButtons(userVote) {
