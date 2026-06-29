@@ -35,8 +35,11 @@
     .hero-col-center {
         width: clamp(380px, 55vw, 520px);
         height: clamp(380px, 55vw, 520px);
-        visibility: hidden;
-        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 10;
     }
 
     .hero-side-title {
@@ -68,7 +71,7 @@
 
     /* Side Panel Glass Cards */
     .hero-panel-card {
-        margin-top: 1.5rem;
+        margin-top: 5.5rem;
         padding: 1.5rem;
         border-radius: 16px;
         max-width: 380px;
@@ -106,18 +109,52 @@
             grid-template-columns: 1fr;
             gap: 2.5rem;
             margin-bottom: 2rem;
+            display: grid;
         }
         .hero-col-left, .hero-col-right {
-            text-align: center;
-            align-items: center;
+            display: contents;
         }
-        .hero-panel-card {
+        .hero-col-left .motto-box {
+            order: 1;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+        }
+        .hero-col-center {
+            order: 2;
+            width: 100%;
+            height: auto;
+            margin: 1.5rem 0;
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transform: none !important;
+        }
+        .hero-col-center > div {
+            height: auto !important;
+            gap: 1.5rem;
+        }
+        .hero-col-right .motto-box {
+            order: 3;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+        }
+        .hero-col-left .hero-panel-card {
+            order: 4;
             text-align: center;
             margin-left: auto;
             margin-right: auto;
         }
-        .hero-col-center {
-            display: none !important;
+        .hero-col-right .hero-panel-card {
+            order: 5;
+            text-align: center;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .hero-side-title {
+            text-align: center;
         }
         .hero-side-title span {
             white-space: normal !important;
@@ -167,18 +204,30 @@
                 <div style="font-size: 0.85rem; font-weight: 700; color: #FFF;"><span style="color: #FF7700; font-weight: 800;">+15 XP</span> for every verified report</div>
             </div>
 
-            <!-- CTA Button -->
-            <div class="animate-in" style="animation-delay: 0.3s; margin-top: 1.5rem;">
-                {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('index') }}" class="glow-btn" style="background: linear-gradient(135deg, #FF7700, #ffaa00); box-shadow: 0 4px 15px rgba(255, 119, 0, 0.4); padding: 0.85rem 2rem; font-size: 1rem;">Move to the Map</a>
-                {% else %}
-                    <a href="{{ url_for('register') }}" class="glow-btn" style="background: linear-gradient(135deg, #FF7700, #ffaa00); box-shadow: 0 4px 15px rgba(255, 119, 0, 0.4); padding: 0.85rem 2rem; font-size: 1rem;">Get Started</a>
-                {% endif %}
-            </div>
         </div>
 
-        <!-- Hidden center spacer that mimics Ashok Chakra dimensions -->
-        <div class="hero-col-center"></div>
+        <!-- Center spacer containing the two main buttons positioned over the chakra -->
+        <div class="hero-col-center">
+            <div style="height: clamp(140px, 20vw, 180px); display: flex; flex-direction: column; justify-content: space-between; align-items: center; transform: translateY(-25px);">
+                <!-- Saffron CTA Button -->
+                <div class="animate-in" style="animation-delay: 0.3s;">
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('index') }}" class="glow-btn" style="background: linear-gradient(135deg, #FF7700, #ffaa00); box-shadow: 0 4px 15px rgba(255, 119, 0, 0.4); padding: 1.1rem 2.8rem; font-size: 1.15rem;">Move to the Map</a>
+                    {% else %}
+                        <a href="{{ url_for('register') }}" class="glow-btn" style="background: linear-gradient(135deg, #FF7700, #ffaa00); box-shadow: 0 4px 15px rgba(255, 119, 0, 0.4); padding: 1.1rem 2.8rem; font-size: 1.15rem;">Get Started</a>
+                    {% endif %}
+                </div>
+
+                <!-- Green CTA Button -->
+                <div class="animate-in" style="animation-delay: 0.4s;">
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('leaderboard') }}" class="glow-btn" style="background: linear-gradient(135deg, #129907, #22c55e); box-shadow: 0 4px 15px rgba(18, 153, 7, 0.4); padding: 1.1rem 2.8rem; font-size: 1.15rem;">View Leaderboard</a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="glow-btn" style="background: linear-gradient(135deg, #129907, #22c55e); box-shadow: 0 4px 15px rgba(18, 153, 7, 0.4); padding: 1.1rem 2.8rem; font-size: 1.15rem;">Sign In</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
 
         <!-- Right Side (Green Themes) -->
         <div class="hero-col-right">
@@ -193,15 +242,6 @@
                 <h3 style="font-size: 1.1rem; color: #129907; font-weight: 700; margin-bottom: 0.5rem; font-family: var(--font-heading);">Civic Leaderboard</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin: 0 0 0.85rem 0;">Collaborate with neighbors, earn community upvotes, and top the weekly state-wide performance boards.</p>
                 <div style="font-size: 0.85rem; font-weight: 700; color: #FFF;"><span style="color: #129907; font-weight: 800;">+50 XP</span> Resolution Bonus</div>
-            </div>
-
-            <!-- CTA Button -->
-            <div class="animate-in" style="animation-delay: 0.4s; margin-top: 1.5rem;">
-                {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('leaderboard') }}" class="glow-btn" style="background: linear-gradient(135deg, #129907, #22c55e); box-shadow: 0 4px 15px rgba(18, 153, 7, 0.4); padding: 0.85rem 2rem; font-size: 1rem;">View Leaderboard</a>
-                {% else %}
-                    <a href="{{ url_for('login') }}" class="glow-btn" style="background: linear-gradient(135deg, #129907, #22c55e); box-shadow: 0 4px 15px rgba(18, 153, 7, 0.4); padding: 0.85rem 2rem; font-size: 1rem;">Sign In</a>
-                {% endif %}
             </div>
         </div>
     </div>
