@@ -507,7 +507,7 @@ def dashboard():
         
         for dist in districts:
             total = Issue.query.filter_by(state=state, district=dist).count()
-            completed = Issue.query.filter_by(state=state, district=dist, govt_status='DONE').count()
+            completed = Issue.query.filter_by(state=state, district=dist).filter((Issue.govt_status == 'DONE') | (Issue.status == 'Resolved')).count()
             rate = (completed / total * 100) if total > 0 else 0
             districts_data.append({
                 'district': dist,
@@ -534,7 +534,7 @@ def dashboard():
             
             for dist in districts:
                 total = Issue.query.filter_by(state=inspect_state_val, district=dist).count()
-                completed = Issue.query.filter_by(state=inspect_state_val, district=dist, govt_status='DONE').count()
+                completed = Issue.query.filter_by(state=inspect_state_val, district=dist).filter((Issue.govt_status == 'DONE') | (Issue.status == 'Resolved')).count()
                 rate = (completed / total * 100) if total > 0 else 0
                 districts_data.append({
                     'district': dist,
@@ -558,7 +558,7 @@ def dashboard():
             
             for st in all_states:
                 total_issues = Issue.query.filter_by(state=st).count()
-                completed_issues = Issue.query.filter_by(state=st, govt_status='DONE').count()
+                completed_issues = Issue.query.filter_by(state=st).filter((Issue.govt_status == 'DONE') | (Issue.status == 'Resolved')).count()
                 completion_rate = (completed_issues / total_issues * 100) if total_issues > 0 else 0
                 districts_count = db.session.query(Issue.district).filter_by(state=st).distinct().count()
                 managers_count = User.query.filter_by(role='state_manager', state=st).count()
