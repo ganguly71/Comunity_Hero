@@ -17,6 +17,46 @@ The platform is deployed and fully active on:
 
 ---
 
+## 📸 Visual Walkthrough
+
+### 🏠 Home Page & Interactive Map
+<p align="center">
+  <img src="https://i.ibb.co/Lzj7LjwZ/Screenshot-2026-06-29-210549.png" alt="Home Page" width="48%">
+  <img src="https://i.ibb.co/fV0qxZfj/Screenshot-2026-06-29-210835.png" alt="Interactive Map" width="48%">
+</p>
+
+### ✍️ Grievance Reporting & Governance
+
+**1. Citizen Grievance Reporting Form**
+<p align="center">
+  <img src="https://i.ibb.co/F4BhVwvS/Screenshot-2026-06-29-211106.png" alt="Reporting an Issue" width="55%">
+</p>
+
+**2. District Manager Issue Log & Resolution Console**
+<p align="center">
+  <img src="https://i.ibb.co/7NkrDfD7/Screenshot-2026-06-29-212807.png" alt="District Manager Issue Log" width="95%">
+</p>
+
+**3. System Admin Dashboard**
+<p align="center">
+  <img src="https://i.ibb.co/wNQq5VdS/Screenshot-2026-06-29-211438.png" alt="Admin Panel" width="95%">
+</p>
+
+### 🏆 Leaderboards & Gamification
+<p align="center">
+  <img src="https://i.ibb.co/d4SVzrvK/Screenshot-2026-06-29-211151.png" alt="Citizen Leaderboard" width="48%">
+  <img src="https://i.ibb.co/5xGR3L8W/Screenshot-2026-06-29-211521.png" alt="National Leaderboards" width="48%">
+</p>
+
+### 📊 Impact Stats & Analytics
+<p align="center">
+  <img src="https://i.ibb.co/tM9qB7wX/Screenshot-2026-06-29-211328.png" alt="Resolution Rate" width="32%">
+  <img src="https://i.ibb.co/7tBknGsf/Screenshot-2026-06-29-211341.png" alt="Category Distribution" width="32%">
+  <img src="https://i.ibb.co/bgZvP981/Screenshot-2026-06-29-211357.png" alt="Intensity Ratios" width="32%">
+</p>
+
+---
+
 ## 🚀 Key Architectural Pillars
 
 ### 1. Public-First Transparency Approach
