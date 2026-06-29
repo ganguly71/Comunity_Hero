@@ -64,7 +64,7 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'community-hero-super-secret-key-123')
 
-# Parse Supabase Database URL (convert postgres:// to postgresql:// for SQLAlchemy)
+# Parse the Supabase Database URL (convert postgres:// to postgresql:// for SQLAlchemy)
 db_url = os.environ.get('DATABASE_URL')
 if db_url:
     if db_url.startswith('postgres://'):
